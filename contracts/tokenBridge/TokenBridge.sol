@@ -130,6 +130,10 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
     address bridgedMappingValue = bridgedToNativeToken[_token];
     address nativeToken;
     bytes memory tokenMetadata;
+
+    // This is to avoid collision if a token with the same address as _token is being bridged from the other layer
+    bool _isNativeLayer;
+
     if (bridgedMappingValue != EMPTY) {
       // Token is bridged
       BridgedToken(_token).burn(msg.sender, _amount);
@@ -159,14 +163,16 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
       if (nativeMappingValue != DEPLOYED_STATUS) {
         tokenMetadata = abi.encode(_safeName(_token), _safeSymbol(_token), _safeDecimals(_token));
       }
+
+      _isNativeLayer = true;
     }
 
     messageService.sendMessage{ value: msg.value }(
       remoteSender,
       msg.value, // fees
-      abi.encodeCall(ITokenBridge.completeBridging, (nativeToken, _amount, _recipient, tokenMetadata))
+      abi.encodeCall(ITokenBridge.completeBridging, (nativeToken, _amount, _recipient, _isNativeLayer, tokenMetadata))
     );
-    emit BridgingInitiated(msg.sender, _recipient, _token, _amount);
+    emit BridgingInitiated(msg.sender, _recipient, _token, _amount, _isNativeLayer);
   }
 
   /**
@@ -196,6 +202,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
    * @param _nativeToken The address of the token on its native chain.
    * @param _amount The amount of the token to be received.
    * @param _recipient The address that will receive the tokens.
+   * @param _isNativeLayer This source layer, needed to avoid collisions if 2 tokens with the same address are both natives.
    * @param _tokenMetadata Additional data used to deploy the bridged token if it
    *   doesn't exist already.
    */
@@ -203,10 +210,16 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
     address _nativeToken,
     uint256 _amount,
     address _recipient,
+    bool _isNativeLayer,
     bytes calldata _tokenMetadata
   ) external onlyMessagingService onlyAuthorizedRemoteSender {
     address nativeMappingValue = nativeToBridgedToken[_nativeToken];
     address bridgedToken;
+
+    // Can not be native on both layers
+    if (_isNativeLayer && nativeMappingValue == NATIVE_STATUS) {
+      revert TokenNativeOnOtherLayer(_nativeToken);
+    }
 
     if (nativeMappingValue == NATIVE_STATUS || nativeMappingValue == DEPLOYED_STATUS) {
       // Token is native on the local chain
