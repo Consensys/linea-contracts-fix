@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 interface ITokenBridge {
   event TokenReserved(address token);
   event CustomContractSet(address nativeToken, address customContract);
-  event BridgingInitiated(address sender, address recipient, address token, uint256 amount);
+  event BridgingInitiated(address sender, address recipient, address token, uint256 amount, bool _isNativeLayer);
   event BridgingFinalized(address nativeToken, address bridgedToken, uint256 amount, address recipient);
   event NewToken(address token);
   event NewTokenDeployed(address bridgedToken);
@@ -57,6 +57,7 @@ interface ITokenBridge {
     address _nativeToken,
     uint256 _amount,
     address _recipient,
+    bool _isNativeLayer,
     bytes calldata _tokenMetadata
   ) external;
 

@@ -119,7 +119,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
     address _token,
     uint256 _amount,
     address _recipient
-  ) public payable nonZeroAddress(_token) nonZeroAmount(_amount) whenNotPaused {
+  ) public payable nonZeroAddress(_token) nonZeroAddress(_recipient) nonZeroAmount(_amount) whenNotPaused {
     address nativeMappingValue = nativeToBridgedToken[_token];
 
     if (nativeMappingValue == RESERVED_STATUS) {
