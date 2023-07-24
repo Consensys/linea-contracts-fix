@@ -96,6 +96,7 @@ contract TokenBridge is
     __Pausable_init();
     __Ownable2Step_init();
     __MessageServiceBase_init(_messageService);
+    __ReentrancyGuard_init();
     tokenBeacon = _tokenBeacon;
     for (uint256 i = 0; i < _reservedTokens.length; i++) {
       if (_reservedTokens[i] == EMPTY) revert ZeroAddressNotAllowed();
