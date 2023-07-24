@@ -4,8 +4,8 @@
     "TokenBridge": "0xb554949Cf593EBd306F6a03418Ee8396BdeE9441"
   },
   "hardhat": {
-    "l1TokenBeacon": "0x4C4a2f8c81640e47606d3fd77B353E87Ba015584",
-    "l2TokenBeacon": "0x21dF544947ba3E8b3c32561399E88B52Dc8b2823"
+    "l1TokenBeacon": "0xDC11f7E700A4c898AE5CAddB1082cFfa76512aDD",
+    "l2TokenBeacon": "0x51A1ceB83B83F1985a81C295d1fF28Afef186E02"
   },
   "l2": {
     "BridgedToken": "0x28315B48C7CBA7380Bdf4b80F4b8732f46031F6B",

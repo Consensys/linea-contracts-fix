@@ -474,6 +474,24 @@ describe("TokenBridge", function () {
         "NewToken",
       );
     });
+
+    it("Should not be able to call bridgeToken by reentrancy", async function () {
+      const { owner, l1TokenBridge } = await loadFixture(deployContractsFixture);
+
+      const ReentrancyContract = await ethers.getContractFactory("ReentrancyContract");
+      const reentrancyContract = await ReentrancyContract.deploy(l1TokenBridge.address);
+
+      const MaliciousERC777 = await ethers.getContractFactory("MaliciousERC777");
+      const maliciousERC777 = await MaliciousERC777.deploy(reentrancyContract.address);
+      await maliciousERC777.mint(reentrancyContract.address, 100);
+      await maliciousERC777.mint(owner.address, 100);
+
+      await reentrancyContract.setToken(maliciousERC777.address);
+
+      await expect(l1TokenBridge.bridgeToken(maliciousERC777.address, 1, owner.address)).to.be.revertedWith(
+        "ReentrancyGuard: reentrant call",
+      );
+    });
   });
 
   describe("setRemoteTokenBridge", function () {

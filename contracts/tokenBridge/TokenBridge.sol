@@ -11,6 +11,7 @@ import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/acc
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import { BridgedToken } from "./BridgedToken.sol";
 import { MessageServiceBase } from "../messageService/MessageServiceBase.sol";
@@ -20,7 +21,13 @@ import { MessageServiceBase } from "../messageService/MessageServiceBase.sol";
  * @notice Contract to manage cross-chain ERC20 bridging.
  * @author ConsenSys Software Inc.
  */
-contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeable, MessageServiceBase {
+contract TokenBridge is
+  ITokenBridge,
+  PausableUpgradeable,
+  Ownable2StepUpgradeable,
+  MessageServiceBase,
+  ReentrancyGuardUpgradeable
+{
   // solhint-disable-next-line var-name-mixedcase
   bytes4 internal constant _PERMIT_SELECTOR =
     bytes4(keccak256(bytes("permit(address,address,uint256,uint256,uint8,bytes32,bytes32)")));
@@ -119,7 +126,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
     address _token,
     uint256 _amount,
     address _recipient
-  ) public payable nonZeroAddress(_token) nonZeroAmount(_amount) whenNotPaused {
+  ) public payable nonZeroAddress(_token) nonZeroAmount(_amount) whenNotPaused nonReentrant {
     address nativeMappingValue = nativeToBridgedToken[_token];
 
     if (nativeMappingValue == RESERVED_STATUS) {
