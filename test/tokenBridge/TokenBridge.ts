@@ -90,7 +90,7 @@ describe("TokenBridge", function () {
         encodedTokenMetadata,
       } = await loadFixture(deployContractsFixture);
       await expect(
-        l1TokenBridge.connect(user).completeBridging(L1DAI.address, 1, user.address, encodedTokenMetadata),
+        l1TokenBridge.connect(user).completeBridging(L1DAI.address, 1, user.address, true, encodedTokenMetadata),
       ).to.be.revertedWithCustomError(l1TokenBridge, "CallerIsNotMessageService");
     });
 
@@ -111,7 +111,7 @@ describe("TokenBridge", function () {
           l1TokenBridge.interface.encodeFunctionData(
             // calldata
             "completeBridging ",
-            [L1DAI.address, 1, user.address, encodedTokenMetadata],
+            [L1DAI.address, 1, user.address, true, encodedTokenMetadata],
           ),
         ),
       ).to.be.revertedWithCustomError(l1TokenBridge, "SenderNotAuthorized");
@@ -473,6 +473,17 @@ describe("TokenBridge", function () {
         l1TokenBridge,
         "NewToken",
       );
+    });
+
+    it("Should revert if recipient is set at 0 address", async function () {
+      const {
+        user,
+        tokens: { L1DAI },
+        l1TokenBridge,
+      } = await loadFixture(deployContractsFixture);
+      await expect(
+        l1TokenBridge.connect(user).bridgeToken(L1DAI.address, 1, ethers.constants.AddressZero),
+      ).to.revertedWithCustomError(l1TokenBridge, "ZeroAddressNotAllowed");
     });
   });
 
