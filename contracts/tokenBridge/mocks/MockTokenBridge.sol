@@ -5,6 +5,6 @@ import { TokenBridge } from "../TokenBridge.sol";
 
 contract MockTokenBridge is TokenBridge {
   function setNativeMappingValue(address token, address value) external {
-    nativeToBridgedToken[token] = value;
+    nativeToBridgedToken[1][token] = value;
   }
 }
