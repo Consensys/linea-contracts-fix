@@ -55,6 +55,7 @@ describe("E2E tests", function () {
         l1TokenBridge,
         l2TokenBridge,
         tokens: { L1DAI },
+        chainIds,
       } = await loadFixture(deployContractsFixture);
       const bridgeAmount = 100;
 
@@ -64,7 +65,7 @@ describe("E2E tests", function () {
       expect(await L1DAI.balanceOf(user.address)).to.be.equal(userBalance);
       expect(await L1DAI.balanceOf(l1TokenBridge.address)).to.be.equal(bridgeAmount);
 
-      const l2TokenAddress = await l2TokenBridge.nativeToBridgedToken(L1DAI.address);
+      const l2TokenAddress = await l2TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address);
       const BridgedToken = await ethers.getContractFactory("BridgedToken");
       const l2Token = BridgedToken.attach(l2TokenAddress);
 
@@ -78,6 +79,7 @@ describe("E2E tests", function () {
         l1TokenBridge,
         l2TokenBridge,
         tokens: { L1DAI },
+        chainIds,
       } = await loadFixture(deployContractsFixture);
       const firstBridgeAmount = 100;
       const secondBridgeAmount = 30;
@@ -85,7 +87,7 @@ describe("E2E tests", function () {
 
       await l1TokenBridge.connect(user).bridgeToken(L1DAI.address, firstBridgeAmount, user.address);
 
-      const l2TokenAddress = await l2TokenBridge.nativeToBridgedToken(L1DAI.address);
+      const l2TokenAddress = await l2TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address);
       const BridgedToken = await ethers.getContractFactory("BridgedToken");
       const l2Token = BridgedToken.attach(l2TokenAddress);
 
@@ -105,7 +107,7 @@ describe("E2E tests", function () {
     });
 
     it("Should support fee tokens and set balances correctly", async function () {
-      const { user, l1TokenBridge, l2TokenBridge } = await loadFixture(deployContractsFixture);
+      const { user, l1TokenBridge, l2TokenBridge, chainIds } = await loadFixture(deployContractsFixture);
 
       const ERC20 = await ethers.getContractFactory("ERC20Fees");
 
@@ -125,7 +127,7 @@ describe("E2E tests", function () {
       const transferredAmount = amountToTransfer.sub(burnAmount);
 
       // Get bridged token address
-      const l2FeeTokenAddress = await l2TokenBridge.nativeToBridgedToken(feeToken.address);
+      const l2FeeTokenAddress = await l2TokenBridge.nativeToBridgedToken(chainIds[0], feeToken.address);
       const l2FeeToken = ERC20.attach(l2FeeTokenAddress);
 
       // Check balances and total supply
@@ -159,7 +161,7 @@ describe("E2E tests", function () {
 
     describe("BridgedToken deployment", function () {
       it("Should return NO_NAME and NO_SYMBOL when the token does not have them.", async function () {
-        const { user, l1TokenBridge, l2TokenBridge } = await loadFixture(deployContractsFixture);
+        const { user, l1TokenBridge, l2TokenBridge, chainIds } = await loadFixture(deployContractsFixture);
 
         const ERC20 = await ethers.getContractFactory("MockERC20NoNameMintBurn");
         const noNameToken = await ERC20.deploy();
@@ -170,7 +172,7 @@ describe("E2E tests", function () {
 
         await l1TokenBridge.connect(user).bridgeToken(noNameToken.address, bridgeAmount, user.address);
 
-        const l2TokenAddress = await l2TokenBridge.nativeToBridgedToken(noNameToken.address);
+        const l2TokenAddress = await l2TokenBridge.nativeToBridgedToken(chainIds[0], noNameToken.address);
         const BridgedToken = await ethers.getContractFactory("BridgedToken");
         const l2Token = BridgedToken.attach(l2TokenAddress);
 
@@ -181,7 +183,7 @@ describe("E2E tests", function () {
         expect(await l2Token.symbol()).to.be.equal("NO_SYMBOL");
       });
       it("Should return UNKNOWN or create a byte array for weird name and symbol.", async function () {
-        const { user, l1TokenBridge, l2TokenBridge } = await loadFixture(deployContractsFixture);
+        const { user, l1TokenBridge, l2TokenBridge, chainIds } = await loadFixture(deployContractsFixture);
 
         const ERC20 = await ethers.getContractFactory("MockERC20WeirdNameSymbol");
         const noNameToken = await ERC20.deploy();
@@ -192,7 +194,7 @@ describe("E2E tests", function () {
 
         await l1TokenBridge.connect(user).bridgeToken(noNameToken.address, bridgeAmount, user.address);
 
-        const l2TokenAddress = await l2TokenBridge.nativeToBridgedToken(noNameToken.address);
+        const l2TokenAddress = await l2TokenBridge.nativeToBridgedToken(chainIds[0], noNameToken.address);
         const BridgedToken = await ethers.getContractFactory("BridgedToken");
         const l2Token = BridgedToken.attach(l2TokenAddress);
 
@@ -203,7 +205,7 @@ describe("E2E tests", function () {
         expect(await l2Token.symbol()).to.be.equal("\u0001");
       });
 
-      it("Should revert if a token being bridged exists as a native token on the other layer", async function () {
+      it("Should not revert if a token being bridged exists as a native token on the other layer", async function () {
         const {
           user,
           l1TokenBridge,
@@ -211,18 +213,12 @@ describe("E2E tests", function () {
           tokens: { L1DAI },
         } = await loadFixture(deployContractsFixture);
 
-        // If a contract has been deployed with CREATE2 with the exact same parameters on both layers
-        // we will have the exact same address on both layers
-        // The token bridge should allow the user to bridge the token from one layer only as a "native" token
-        // We can not have 2 "native" tokens with the same address on both layers, it should revert if that happens
-
         const bridgeAmount = 100;
         await l1TokenBridge.connect(user).bridgeToken(L1DAI.address, bridgeAmount, user.address);
 
         await L1DAI.connect(user).approve(l2TokenBridge.address, bridgeAmount);
-        await expect(
-          l2TokenBridge.connect(user).bridgeToken(L1DAI.address, bridgeAmount, user.address),
-        ).to.be.revertedWithCustomError(l2TokenBridge, "TokenNativeOnOtherLayer");
+        await expect(l2TokenBridge.connect(user).bridgeToken(L1DAI.address, bridgeAmount, user.address)).to.not.be
+          .reverted;
       });
     });
   });
@@ -268,12 +264,13 @@ describe("E2E tests", function () {
         l1TokenBridge,
         l2TokenBridge,
         tokens: { L1USDT, L2UNI },
+        chainIds,
       } = await loadFixture(deployContractsFixture);
       const amountBridged = 100;
 
       await l1TokenBridge.connect(user).bridgeToken(L1USDT.address, amountBridged, user.address);
 
-      const brigedToNativeContract = await l2TokenBridge.nativeToBridgedToken(L1USDT.address);
+      const brigedToNativeContract = await l2TokenBridge.nativeToBridgedToken(chainIds[0], L1USDT.address);
 
       // Try to set custom contract with a bridgedTokenContract, should revert
       await expect(
@@ -303,11 +300,12 @@ describe("E2E tests", function () {
         deployer,
         l1TokenBridge,
         tokens: { L1DAI },
+        chainIds,
       } = await loadFixture(deployContractsFixture);
       await expect(l1TokenBridge.connect(deployer).setReserved(L1DAI.address)).not.to.be.revertedWith(
         "TokenBridge: token already bridged",
       );
-      expect(await l1TokenBridge.nativeToBridgedToken(L1DAI.address)).to.be.equal(RESERVED_STATUS);
+      expect(await l1TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address)).to.be.equal(RESERVED_STATUS);
     });
 
     it("Should not be possible to bridge reserved tokens", async function () {
@@ -346,6 +344,7 @@ describe("E2E tests", function () {
         l1TokenBridge,
         l2TokenBridge,
         tokens: { L1DAI },
+        chainIds,
       } = await loadFixture(deployContractsFixture);
       // Deploy new Message Service
       const MessageServiceFactory = await ethers.getContractFactory("MockMessageService");
@@ -363,7 +362,7 @@ describe("E2E tests", function () {
       expect(await L1DAI.balanceOf(user.address)).to.be.equal(userBalance);
       expect(await L1DAI.balanceOf(l1TokenBridge.address)).to.be.equal(bridgeAmount);
 
-      const l2TokenAddress = await l2TokenBridge.nativeToBridgedToken(L1DAI.address);
+      const l2TokenAddress = await l2TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address);
       const BridgedToken = await ethers.getContractFactory("BridgedToken");
       const l2Token = BridgedToken.attach(l2TokenAddress);
 
@@ -404,22 +403,23 @@ describe("E2E tests", function () {
         l1TokenBridge,
         l2TokenBridge,
         tokens: { L1DAI, L1USDT },
+        chainIds,
       } = await loadFixture(deployContractsFixture);
 
       const bridgeAmount = 100;
       await l1TokenBridge.connect(user).bridgeToken(L1DAI.address, bridgeAmount, user.address);
       await l1TokenBridge.connect(user).bridgeToken(L1USDT.address, bridgeAmount, user.address);
 
-      expect(await l1TokenBridge.nativeToBridgedToken(L1DAI.address)).to.be.equal(NATIVE_STATUS);
-      expect(await l1TokenBridge.nativeToBridgedToken(L1USDT.address)).to.be.equal(NATIVE_STATUS);
+      expect(await l1TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address)).to.be.equal(NATIVE_STATUS);
+      expect(await l1TokenBridge.nativeToBridgedToken(chainIds[0], L1USDT.address)).to.be.equal(NATIVE_STATUS);
 
-      const L2DAIBridgedAddress = await l2TokenBridge.nativeToBridgedToken(L1DAI.address);
-      const L2USDTBridgedAddress = await l2TokenBridge.nativeToBridgedToken(L1USDT.address);
+      const L2DAIBridgedAddress = await l2TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address);
+      const L2USDTBridgedAddress = await l2TokenBridge.nativeToBridgedToken(chainIds[0], L1USDT.address);
 
       await l2TokenBridge.confirmDeployment([L2DAIBridgedAddress, L2USDTBridgedAddress]);
 
-      expect(await l1TokenBridge.nativeToBridgedToken(L1DAI.address)).to.be.equal(DEPLOYED_STATUS);
-      expect(await l1TokenBridge.nativeToBridgedToken(L1USDT.address)).to.be.equal(DEPLOYED_STATUS);
+      expect(await l1TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address)).to.be.equal(DEPLOYED_STATUS);
+      expect(await l1TokenBridge.nativeToBridgedToken(chainIds[0], L1USDT.address)).to.be.equal(DEPLOYED_STATUS);
 
       // Should not revert
       await expect(l1TokenBridge.connect(user).bridgeToken(L1DAI.address, bridgeAmount, user.address)).to.be.not
@@ -434,12 +434,13 @@ describe("E2E tests", function () {
         l1TokenBridge,
         l2TokenBridge,
         tokens: { L1DAI, L1USDT },
+        chainIds,
       } = await loadFixture(deployContractsFixture);
 
       const bridgeAmount = 100;
       await l1TokenBridge.connect(user).bridgeToken(L1DAI.address, bridgeAmount, user.address);
 
-      const L2DAIBridgedAddress = await l2TokenBridge.nativeToBridgedToken(L1DAI.address);
+      const L2DAIBridgedAddress = await l2TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address);
       await expect(
         l2TokenBridge.confirmDeployment([L2DAIBridgedAddress, L1USDT.address]),
       ).to.be.revertedWithCustomError(l2TokenBridge, "TokenNotDeployed");
@@ -451,17 +452,18 @@ describe("E2E tests", function () {
         l1TokenBridge,
         l2TokenBridge,
         tokens: { L1DAI },
+        chainIds,
       } = await loadFixture(deployContractsFixture);
       const bridgeAmount = 10;
 
       const initialAmount = await L1DAI.balanceOf(user.address);
       await l1TokenBridge.connect(user).bridgeToken(L1DAI.address, bridgeAmount, user.address);
-      const L2DAIBridgedAddress = await l2TokenBridge.nativeToBridgedToken(L1DAI.address);
+      const L2DAIBridgedAddress = await l2TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address);
       await l2TokenBridge.confirmDeployment([L2DAIBridgedAddress]);
 
       expect(await L1DAI.balanceOf(user.address)).to.be.equal(initialAmount.sub(bridgeAmount));
       expect(await L1DAI.attach(L2DAIBridgedAddress).balanceOf(user.address)).to.be.equal(bridgeAmount);
-      expect(await l1TokenBridge.nativeToBridgedToken(L1DAI.address)).to.be.equal(DEPLOYED_STATUS);
+      expect(await l1TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address)).to.be.equal(DEPLOYED_STATUS);
 
       await L1DAI.attach(L2DAIBridgedAddress).connect(user).approve(l2TokenBridge.address, bridgeAmount);
       await l2TokenBridge.connect(user).bridgeToken(L2DAIBridgedAddress, bridgeAmount, user.address);
