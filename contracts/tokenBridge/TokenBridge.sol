@@ -240,7 +240,7 @@ contract TokenBridge is
       bridgedToken = nativeMappingValue;
       if (nativeMappingValue == EMPTY) {
         // New token
-        bridgedToken = deployBridgedToken(_nativeToken, _tokenMetadata);
+        bridgedToken = deployBridgedToken(_nativeToken, _tokenMetadata, sourceChainId);
         bridgedToNativeToken[bridgedToken] = _nativeToken;
         nativeToBridgedToken[targetChainId][_nativeToken] = bridgedToken;
       }
@@ -319,11 +319,12 @@ contract TokenBridge is
    * @param _tokenMetadata The encoded metadata for the token.
    * @return The address of the newly deployed BridgedToken contract.
    */
-  function deployBridgedToken(address _nativeToken, bytes calldata _tokenMetadata) internal returns (address) {
-    bytes32 _salt;
-    assembly {
-      _salt := _nativeToken
-    }
+  function deployBridgedToken(
+    address _nativeToken,
+    bytes calldata _tokenMetadata,
+    uint256 chainId
+  ) internal returns (address) {
+    bytes32 _salt = keccak256(abi.encode(chainId, _nativeToken));
     BeaconProxy bridgedToken = new BeaconProxy{ salt: _salt }(tokenBeacon, "");
     address bridgedTokenAddress = address(bridgedToken);
 
