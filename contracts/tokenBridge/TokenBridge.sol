@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 import { ITokenBridge } from "./interfaces/ITokenBridge.sol";
 import { IMessageService } from "../interfaces/IMessageService.sol";
@@ -106,9 +106,9 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
    *   Alternatively, you can use BridgeTokenWithPermit to do so in a single
    *   transaction. If you want the transfer to be automatically executed on the
    *   destination chain. You should send enough ETH to pay the postman fees.
-   *   Note that Linea can reserved some tokens (which use a dedicated bridge).
-   *   In this case, the token cannot be bridged. Linea can only reserved tokens
-   *   that are not been bridged yet.
+   *   Note that Linea can reserve some tokens (which use a dedicated bridge).
+   *   In this case, the token cannot be bridged. Linea can only reserve tokens
+   *   that have not been bridged yet.
    *   Linea can pause the bridge for security reason. In this case new bridge
    *   transaction would revert.
    * @param _token The address of the token to be bridged.
@@ -119,7 +119,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
     address _token,
     uint256 _amount,
     address _recipient
-  ) public payable nonZeroAddress(_token) nonZeroAmount(_amount) whenNotPaused {
+  ) public payable nonZeroAddress(_token) nonZeroAddress(_recipient) nonZeroAmount(_amount) whenNotPaused {
     address nativeMappingValue = nativeToBridgedToken[_token];
 
     if (nativeMappingValue == RESERVED_STATUS) {
@@ -204,7 +204,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
     uint256 _amount,
     address _recipient,
     bytes calldata _tokenMetadata
-  ) external onlyMessagingService onlyAuthorizedRemoteSender {
+  ) external onlyMessagingService onlyAuthorizedRemoteSender whenNotPaused {
     address nativeMappingValue = nativeToBridgedToken[_nativeToken];
     address bridgedToken;
 
@@ -231,7 +231,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
   function setMessageService(address _messageService) public onlyOwner {
     address oldMessageService = address(messageService);
     messageService = IMessageService(_messageService);
-    emit MessageServiceUpdated(_messageService, oldMessageService);
+    emit MessageServiceUpdated(_messageService, oldMessageService, msg.sender);
   }
 
   /**
@@ -255,7 +255,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
       abi.encodeCall(ITokenBridge.setDeployed, (_tokens))
     );
 
-    emit DeploymentConfirmed(_tokens);
+    emit DeploymentConfirmed(_tokens, msg.sender);
   }
 
   /**
@@ -281,14 +281,14 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
   function setRemoteTokenBridge(address _remoteTokenBridge) external onlyOwner {
     if (remoteSender != EMPTY) revert RemoteTokenBridgeAlreadySet(remoteSender);
     _setRemoteSender(_remoteTokenBridge);
-    emit RemoteTokenBridgeSet(_remoteTokenBridge);
+    emit RemoteTokenBridgeSet(_remoteTokenBridge, msg.sender);
   }
 
   /**
    * @dev Deploy a new EC20 contract for bridged token using a beacon proxy pattern.
    *   To adapt to future requirements, Linea can update the implementation of
    *   all (existing and future) contracts by updating the beacon. This update is
-   *   subject to a by a time lock.
+   *   subject to a delay by a time lock.
    *   Contracts are deployed using CREATE2 so deployment address is deterministic.
    * @param _nativeToken The address of the native token on the source chain.
    * @param _tokenMetadata The encoded metadata for the token.
@@ -304,13 +304,15 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
 
     (string memory name, string memory symbol, uint8 decimals) = abi.decode(_tokenMetadata, (string, string, uint8));
     BridgedToken(bridgedTokenAddress).initialize(name, symbol, decimals);
-    emit NewTokenDeployed(bridgedTokenAddress);
+    emit NewTokenDeployed(bridgedTokenAddress, _nativeToken);
     return bridgedTokenAddress;
   }
 
   /**
-   * @dev Linea can reserved tokens. In this case, the token cannot be bridged.
-   *   Linea can only reserved tokens that are not been bridged before.
+   * @dev Linea can reserve tokens. In this case, the token cannot be bridged.
+   *   Linea can only reserve tokens that have not been bridged before.
+   * @notice Make sure that you that _token is native to the current chain
+   * where you are calling this function from
    * @param _token The address of the token to be set as reserved.
    */
   function setReserved(address _token) public onlyOwner isNewToken(_token) nonZeroAddress(_token) {
@@ -346,7 +348,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
     }
     nativeToBridgedToken[_nativeToken] = _targetContract;
     bridgedToNativeToken[_targetContract] = _nativeToken;
-    emit CustomContractSet(_nativeToken, _targetContract);
+    emit CustomContractSet(_nativeToken, _targetContract, msg.sender);
   }
 
   /**
@@ -369,7 +371,6 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
   /**
    * @dev Provides a safe ERC20.name version which returns 'NO_NAME' as fallback string.
    * @param _token The address of the ERC-20 token contract
-   * @param _token The address of the ERC-20 token contract.
    */
   function _safeName(address _token) internal view returns (string memory) {
     (bool success, bytes memory data) = _token.staticcall(abi.encodeCall(IERC20MetadataUpgradeable.name, ()));
@@ -403,7 +404,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
     if (_data.length >= 64) {
       return abi.decode(_data, (string));
     } else if (_data.length != 32) {
-      return "UNKNOWN";
+      return "NOT_VALID_ENCODING";
     }
 
     // Since the strings on bytes32 are encoded left-right, check the first zero in the data
@@ -416,7 +417,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
 
     // If the first one is 0, we do not handle the encoding
     if (nonZeroBytes == 0) {
-      return "UNKNOWN";
+      return "NOT_VALID_ENCODING";
     }
     // Create a byte array with nonZeroBytes length
     bytes memory bytesArray = new bytes(nonZeroBytes);

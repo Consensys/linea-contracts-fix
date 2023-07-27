@@ -199,7 +199,7 @@ describe("E2E tests", function () {
         await l2Token.connect(user).approve(l2TokenBridge.address, bridgeAmount);
         await l2TokenBridge.connect(user).bridgeToken(l2TokenAddress, bridgeAmount, user.address);
 
-        expect(await l2Token.name()).to.be.equal("UNKNOWN");
+        expect(await l2Token.name()).to.be.equal("NOT_VALID_ENCODING");
         expect(await l2Token.symbol()).to.be.equal("\u0001");
       });
 
@@ -384,7 +384,7 @@ describe("E2E tests", function () {
     });
 
     it("Should emit en event when updating the Message Service", async function () {
-      const { l1TokenBridge } = await loadFixture(deployContractsFixture);
+      const { l1TokenBridge, deployer } = await loadFixture(deployContractsFixture);
       // Deploy new Message Service
       const MessageServiceFactory = await ethers.getContractFactory("MockMessageService");
       const messageService = await MessageServiceFactory.deploy();
@@ -393,7 +393,7 @@ describe("E2E tests", function () {
       const oldMessageService = await l1TokenBridge.messageService();
       await expect(l1TokenBridge.setMessageService(messageService.address))
         .to.emit(l1TokenBridge, "MessageServiceUpdated")
-        .withArgs(messageService.address, oldMessageService);
+        .withArgs(messageService.address, oldMessageService, deployer.address);
     });
   });
 
