@@ -159,6 +159,98 @@ describe("E2E tests", function () {
       ).to.be.revertedWithCustomError(l1TokenBridge, "ZeroAddressNotAllowed");
     });
 
+    it("Should create bridged token on the targeted layer even if both native tokens on both layers have the same address and are bridged at the same time", async function () {
+      const {
+        user,
+        l1TokenBridge,
+        l2TokenBridge,
+        messageService,
+        tokens: { L1DAI },
+        chainIds,
+      } = await loadFixture(deployContractsFixture);
+      const balanceTokenUser = await L1DAI.balanceOf(user.address);
+      const bridgeAmount = 10;
+      const MockERC20 = await ethers.getContractFactory("MockERC20MintBurn");
+
+      // Deploy another message service that will not send the message along to the other
+      // layer so that we can simulate the same state we could get if 2 tokens are sent
+      // at the same time, meaning that the function bridgeToken() has been called
+      // on both layers while the completeBridging has not been called yet
+      const MockMessageServiceV2 = await ethers.getContractFactory("MockMessageServiceV2");
+      const mockMessageServiceV2 = await MockMessageServiceV2.deploy();
+      await mockMessageServiceV2.deployed();
+
+      await L1DAI.connect(user).approve(l2TokenBridge.address, ethers.constants.MaxUint256);
+      await l2TokenBridge.setMessageService(mockMessageServiceV2.address);
+      await l2TokenBridge.connect(user).bridgeToken(L1DAI.address, bridgeAmount, user.address);
+
+      expect(await l2TokenBridge.nativeToBridgedToken(chainIds[1], L1DAI.address)).to.be.equal(NATIVE_STATUS);
+
+      await l1TokenBridge.setMessageService(mockMessageServiceV2.address);
+      await l1TokenBridge.connect(user).bridgeToken(L1DAI.address, bridgeAmount, user.address);
+
+      expect(await l1TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address)).to.be.equal(NATIVE_STATUS);
+
+      // We check that the brigedToken have not been created yet
+      expect(await l2TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address)).to.be.equal(
+        ethers.constants.AddressZero,
+      );
+      expect(await l1TokenBridge.nativeToBridgedToken(chainIds[1], L1DAI.address)).to.be.equal(
+        ethers.constants.AddressZero,
+      );
+
+      // Here we are in the situation where both tokens are native to the both chains but neither
+      // of them have arrived to their destination yet, completeBridging() has not been called yet
+
+      // We reassign the normal message service
+      await l2TokenBridge.setMessageService(messageService.address);
+      await l1TokenBridge.setMessageService(messageService.address);
+
+      // This initial amount has to be ignored for the test since in reality
+      // the first message would go through the message service and funds would not be stuck
+      const initialBalanceTokenL1Bridge = await L1DAI.balanceOf(l1TokenBridge.address);
+      const initialBalanceTokenL2Bridge = await L1DAI.balanceOf(l2TokenBridge.address);
+
+      expect(initialBalanceTokenL1Bridge).to.be.equal(bridgeAmount);
+      expect(initialBalanceTokenL2Bridge).to.be.equal(bridgeAmount);
+
+      // Now we try to bridge with the right message service
+      // It should create the bridgedToken on the other layer for each native token
+      await l2TokenBridge.connect(user).bridgeToken(L1DAI.address, bridgeAmount, user.address);
+
+      // BridgedToken on L1 is created
+      const bridgedTokenL1Addr = await l1TokenBridge.nativeToBridgedToken(chainIds[1], L1DAI.address);
+      expect(bridgedTokenL1Addr).to.not.equal(ethers.constants.AddressZero);
+      const bridgedTokenL1 = MockERC20.attach(bridgedTokenL1Addr);
+      expect(await L1DAI.balanceOf(l2TokenBridge.address)).to.be.equal(bridgeAmount * 2);
+      expect(await bridgedTokenL1.balanceOf(user.address)).to.be.equal(bridgeAmount);
+
+      await l1TokenBridge.connect(user).bridgeToken(L1DAI.address, bridgeAmount, user.address);
+
+      // BridgedToken on L2 is created
+      const bridgedTokenL2Addr = await l2TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address);
+      expect(bridgedTokenL2Addr).to.not.equal(ethers.constants.AddressZero);
+      const bridgedTokenL2 = MockERC20.attach(bridgedTokenL2Addr);
+      expect(await L1DAI.balanceOf(l1TokenBridge.address)).to.be.equal(bridgeAmount * 2);
+      expect(await bridgedTokenL2.balanceOf(user.address)).to.be.equal(bridgeAmount);
+
+      // At this point the user bridged DAI 4 times so he should have 4 times
+      // the bridge amount less in his balance
+      expect(await L1DAI.balanceOf(user.address)).to.be.equal(balanceTokenUser - bridgeAmount * 4);
+
+      // The user has received the minted bridgedToken on both chains
+      // Now we get back our native tokens on both chains by bridging the bridged tokens that the user has received
+      await bridgedTokenL1.connect(user).approve(l1TokenBridge.address, ethers.constants.MaxUint256);
+      await bridgedTokenL2.connect(user).approve(l2TokenBridge.address, ethers.constants.MaxUint256);
+
+      await l1TokenBridge.connect(user).bridgeToken(bridgedTokenL1.address, bridgeAmount, user.address);
+      await l2TokenBridge.connect(user).bridgeToken(bridgedTokenL2.address, bridgeAmount, user.address);
+
+      expect(await bridgedTokenL1.balanceOf(user.address)).to.be.equal(0);
+      expect(await bridgedTokenL2.balanceOf(user.address)).to.be.equal(0);
+      expect(await L1DAI.balanceOf(user.address)).to.be.equal(balanceTokenUser - bridgeAmount * 2);
+    });
+
     describe("BridgedToken deployment", function () {
       it("Should return NO_NAME and NO_SYMBOL when the token does not have them.", async function () {
         const { user, l1TokenBridge, l2TokenBridge, chainIds } = await loadFixture(deployContractsFixture);
