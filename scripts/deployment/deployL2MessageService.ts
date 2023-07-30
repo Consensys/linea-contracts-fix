@@ -1,7 +1,19 @@
 import { deployUpgradableFromFactory, requireEnv } from "../hardhat/utils";
 
+/*
+    *******************************************************************************************
+    1. Set the L2MSGSERVICE_SECURITY_COUNCIL - e.g EOA or Safe
+    2. Set the L2MSGSERVICE_L1L2_MESSAGE_SETTER for message hash anchoring
+    3. Set the L2MSGSERVICE_RATE_LIMIT_PERIOD in Seconds
+    4. Set the L2MSGSERVICE_RATE_LIMIT_AMOUNT in Wei
+    *******************************************************************************************
+    NB: use the verifier.address output as input for scripts/deployment/setVerifierAddress.ts 
+    *******************************************************************************************
+    npx hardhat run --network zkevm_dev scripts/deployment/deployL2MessageService.ts
+    *******************************************************************************************
+*/
+
 async function main() {
-  // L2 MESSAGE SERVICE DEPLOYED AS UPGRADEABLE PROXY
   const L2MessageService_securityCouncil = requireEnv("L2MSGSERVICE_SECURITY_COUNCIL");
   const L2MessageService_l1l2MessageSetter = requireEnv("L2MSGSERVICE_L1L2_MESSAGE_SETTER");
   const L2MessageService_rateLimitPeriod = requireEnv("L2MSGSERVICE_RATE_LIMIT_PERIOD");

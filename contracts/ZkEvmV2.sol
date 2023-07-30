@@ -96,12 +96,13 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
   /**
    * @notice Finalizes blocks without using a proof.
    * @dev DEFAULT_ADMIN_ROLE is required to execute.
+   * @dev _blocksData[0].fromAddresses is a temporary workaround to pass bytes calldata
    * @param _blocksData The full BlockData collection - block, transaction and log data.
    **/
   function finalizeBlocksWithoutProof(
     BlockData[] calldata _blocksData
   ) external whenTypeNotPaused(GENERAL_PAUSE_TYPE) onlyRole(DEFAULT_ADMIN_ROLE) {
-    _finalizeBlocks(_blocksData, new bytes(0), 0, bytes32(0), false);
+    _finalizeBlocks(_blocksData, _blocksData[0].fromAddresses, 0, bytes32(0), false);
   }
 
   /**
@@ -141,17 +142,25 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
    **/
   function _finalizeBlocks(
     BlockData[] calldata _blocksData,
-    bytes memory _proof,
+    bytes calldata _proof,
     uint256 _proofType,
     bytes32 _parentStateRootHash,
     bool _shouldProve
   ) private {
     uint256 currentBlockNumberTemp = currentL2BlockNumber;
-    uint256 firstBlockNumber = currentBlockNumberTemp + 1;
+
+    uint256 firstBlockNumber;
+    unchecked {
+      firstBlockNumber = currentBlockNumberTemp + 1;
+    }
 
     uint256[] memory timestamps = new uint256[](_blocksData.length);
     bytes32[] memory blockHashes = new bytes32[](_blocksData.length);
-    bytes32[] memory hashOfRootHashes = new bytes32[](_blocksData.length + 1);
+    bytes32[] memory hashOfRootHashes;
+
+    unchecked {
+      hashOfRootHashes = new bytes32[](_blocksData.length + 1);
+    }
 
     hashOfRootHashes[0] = _parentStateRootHash;
 
@@ -168,7 +177,9 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
       hashOfTxHashes = _processBlockTransactions(blockInfo.transactions, blockInfo.batchReceptionIndices);
       hashOfMessageHashes = _processMessageHashes(blockInfo.l2ToL1MsgHashes);
 
-      ++currentBlockNumberTemp;
+      unchecked {
+        ++currentBlockNumberTemp;
+      }
 
       blockHashes[i] = keccak256(
         abi.encodePacked(
@@ -180,7 +191,10 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
       );
 
       timestamps[i] = blockInfo.l2BlockTimestamp;
-      hashOfRootHashes[i + 1] = blockInfo.blockRootHash;
+
+      unchecked {
+        hashOfRootHashes[i + 1] = blockInfo.blockRootHash;
+      }
 
       emit BlockFinalized(currentBlockNumberTemp, blockInfo.blockRootHash);
 
@@ -189,26 +203,30 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
       }
     }
 
-    stateRootHashes[currentBlockNumberTemp] = _blocksData[_blocksData.length - 1].blockRootHash;
-    currentTimestamp = _blocksData[_blocksData.length - 1].l2BlockTimestamp;
-    currentL2BlockNumber = currentBlockNumberTemp;
+    unchecked {
+      uint256 arrayIndex = _blocksData.length - 1;
+      stateRootHashes[currentBlockNumberTemp] = _blocksData[arrayIndex].blockRootHash;
+      currentTimestamp = _blocksData[arrayIndex].l2BlockTimestamp;
+      currentL2BlockNumber = currentBlockNumberTemp;
+    }
 
     if (_shouldProve) {
-      _verifyProof(
-        uint256(
-          keccak256(
-            abi.encode(
-              keccak256(abi.encodePacked(blockHashes)),
-              firstBlockNumber,
-              keccak256(abi.encodePacked(timestamps)),
-              keccak256(abi.encodePacked(hashOfRootHashes))
-            )
+      uint256 publicInput = uint256(
+        keccak256(
+          abi.encode(
+            keccak256(abi.encodePacked(blockHashes)),
+            firstBlockNumber,
+            keccak256(abi.encodePacked(timestamps)),
+            keccak256(abi.encodePacked(hashOfRootHashes))
           )
-        ) % MODULO_R,
-        _proofType,
-        _proof,
-        _parentStateRootHash
+        )
       );
+
+      assembly {
+        publicInput := mod(publicInput, MODULO_R)
+      }
+
+      _verifyProof(publicInput, _proofType, _proof, _parentStateRootHash);
     }
   }
 
@@ -275,7 +293,7 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
   function _verifyProof(
     uint256 _publicInputHash,
     uint256 _proofType,
-    bytes memory _proof,
+    bytes calldata _proof,
     bytes32 _parentStateRootHash
   ) private {
     uint256[] memory input = new uint256[](1);

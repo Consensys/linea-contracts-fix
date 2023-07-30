@@ -1,21 +1,25 @@
-import { deployFromFactory, requireEnv } from "../hardhat/utils";
+import { ethers, upgrades } from "hardhat";
 
 /*
     *******************************************************************************************
-    1. Set the VERIFIER_CONTRACT_NAME - e.g PlonkeVerifyFull
+
     *******************************************************************************************
-    NB: use the verifier.address output as input for scripts/deployment/setVerifierAddress.ts 
     *******************************************************************************************
-    npx hardhat run --network zkevm_dev scripts/deployment/deployVerifier.ts
+    npx hardhat run --network zkevm_dev scripts/deployment/deployImplementation.ts
     *******************************************************************************************
 */
 
 async function main() {
-  const verifierContractName = requireEnv("VERIFIER_CONTRACT_NAME");
+  const factory = await ethers.getContractFactory("ZkEvmV2");
 
-  // PLONK VERIFIER
-  const verifier = await deployFromFactory(verifierContractName);
-  console.log(`${verifierContractName} deployed at ${verifier.address}`);
+  console.log("Deploying V2 Contract...");
+  const v2contract = await upgrades.deployImplementation(factory, {
+    kind: "transparent",
+  });
+
+  console.log(v2contract);
+
+  console.log(`Contract deployed at ${v2contract}`);
 }
 
 main()

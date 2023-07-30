@@ -846,14 +846,23 @@ describe("L2MessageService", () => {
           BigNumber.from(1),
           "0x",
         );
+
+        const expectedSecondBytes = await encodeSendMessage(
+          l2MessageService.address,
+          notAuthorizedAccount.address,
+          MESSAGE_FEE,
+          MESSAGE_VALUE_1ETH,
+          BigNumber.from(2),
+          "0x",
+        );
+
         const destinationBalance = await notAuthorizedAccount.getBalance();
 
         await l2MessageService.addFunds({ value: INITIAL_WITHDRAW_LIMIT });
 
-        const expectedBytesArray = [ethers.utils.keccak256(expectedBytes)];
+        const expectedBytesArray = [ethers.utils.keccak256(expectedBytes), ethers.utils.keccak256(expectedSecondBytes)];
         await l2MessageService.connect(l1l2MessageSetter).addL1L2MessageHashes(expectedBytesArray);
 
-        const adminBalance = await admin.getBalance();
         await l2MessageService
           .connect(admin)
           .claimMessage(
@@ -866,7 +875,23 @@ describe("L2MessageService", () => {
             1,
           );
 
-        expect(await notAuthorizedAccount.getBalance()).to.be.greaterThan(destinationBalance.add(MESSAGE_VALUE_1ETH));
+        const adminBalance = await admin.getBalance();
+
+        await l2MessageService
+          .connect(admin)
+          .claimMessage(
+            l2MessageService.address,
+            notAuthorizedAccount.address,
+            MESSAGE_FEE,
+            MESSAGE_VALUE_1ETH,
+            ethers.constants.AddressZero,
+            "0x",
+            2,
+          );
+
+        expect(await notAuthorizedAccount.getBalance()).to.be.greaterThan(
+          destinationBalance.add(MESSAGE_VALUE_1ETH).add(MESSAGE_VALUE_1ETH),
+        );
         expect(await admin.getBalance()).to.be.greaterThan(adminBalance);
 
         expect(await l2MessageService.inboxL1L2MessageStatus(ethers.utils.keccak256(expectedBytes))).to.be.equal(
@@ -980,7 +1005,7 @@ describe("L2MessageService", () => {
               callSignature,
               1,
             ),
-        ).to.be.revertedWithCustomError(l2MessageService, "MessageDoesNotExistOrHasAlreadyBeenClaimed");
+        ).to.be.revertedWith("ReentrancyGuard: reentrant call");
       });
 
       it("Should fail when the destination errors", async () => {

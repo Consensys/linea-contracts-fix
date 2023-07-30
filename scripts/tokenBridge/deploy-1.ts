@@ -15,6 +15,7 @@ export async function main() {
 
   let messageServiceAddr;
   let reservedAddresses;
+  let chainIds = [SupportedChainIds.MAINNET, SupportedChainIds.LINEA];
   switch (chainId) {
     case SupportedChainIds.LINEA:
     case SupportedChainIds.LINEA_TESTNET:
@@ -22,6 +23,11 @@ export async function main() {
       reservedAddresses = process.env.L2_RESERVED_TOKEN_ADDRESSES
         ? process.env.L2_RESERVED_TOKEN_ADDRESSES.split(" ")
         : [];
+      if (chainId === SupportedChainIds.LINEA) {
+        chainIds = [SupportedChainIds.LINEA, SupportedChainIds.MAINNET];
+      } else {
+        chainIds = [SupportedChainIds.LINEA_TESTNET, SupportedChainIds.GOERLI];
+      }
       break;
     case SupportedChainIds.GOERLI:
     case SupportedChainIds.MAINNET:
@@ -29,6 +35,9 @@ export async function main() {
       reservedAddresses = process.env.L1_RESERVED_TOKEN_ADDRESSES
         ? process.env.L1_RESERVED_TOKEN_ADDRESSES.split(" ")
         : [];
+      if (chainId === SupportedChainIds.GOERLI) {
+        chainIds = [SupportedChainIds.GOERLI, SupportedChainIds.LINEA_TESTNET];
+      }
       break;
   }
 
@@ -48,6 +57,8 @@ export async function main() {
     owner.address,
     messageServiceAddr,
     bridgedToken.address,
+    chainIds[0],
+    chainIds[1],
     reservedAddresses,
   ]);
   await tokenBridge.deployed();

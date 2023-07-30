@@ -25,7 +25,11 @@ abstract contract L2MessageManager is Initializable, PauseManager, IL2MessageMan
   mapping(bytes32 => uint256) public inboxL1L2MessageStatus;
 
   /// @dev Keep free storage slots for future implementation updates to avoid storage collision.
-  uint256[50] private __gap;
+  // *******************************************************************************************
+  // NB: THIS GAP HAS BEEN PUSHED OUT IN FAVOUR OF THE GAP INSIDE THE REENTRANCY CODE
+  //uint256[50] private __gap;
+  // NB: DO NOT USE THIS GAP
+  // *******************************************************************************************
 
   /**
    * @notice Initialises L2 message manager contract.
