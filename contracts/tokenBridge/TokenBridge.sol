@@ -172,6 +172,8 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
   /**
    * @notice Similar to `bridgeToken` function but allows to pass additional
    *   permit data to do the ERC20 approval in a single transaction.
+   * @notice _permit can fail silently, don't rely on this function passing as a form
+   *   of authentication
    * @param _token The address of the token to be bridged.
    * @param _amount The amount of the token to be bridged.
    * @param _recipient The address that will receive the tokens on the other chain.
@@ -431,6 +433,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
 
   /**
    * @notice Call the token permit method of extended ERC20
+   * @notice Only support tokens implementing ERC-2612
    * @param _token ERC20 token address
    * @param _permitData Raw data of the call `permit` of the token
    */
