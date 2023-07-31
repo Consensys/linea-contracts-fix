@@ -57,6 +57,7 @@ interface ITokenBridge {
    * @param _nativeToken The address of the token on its native chain.
    * @param _amount The amount of the token to be received.
    * @param _recipient The address that will receive the tokens.
+   * @param _chainId The source chainId or target chaindId for this token
    * @param _tokenMetadata Additional data used to deploy the bridged token if it
    *   doesn't exist already.
    */
@@ -64,6 +65,7 @@ interface ITokenBridge {
     address _nativeToken,
     uint256 _amount,
     address _recipient,
+    uint256 _chainId,
     bytes calldata _tokenMetadata
   ) external;
 

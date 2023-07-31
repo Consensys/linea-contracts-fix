@@ -2,6 +2,8 @@
 pragma solidity ^0.8.19;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+
 import { IMessageService } from "../../interfaces/IMessageService.sol";
 import { IGenericErrors } from "../../interfaces/IGenericErrors.sol";
 import { PauseManager } from "../lib/PauseManager.sol";
@@ -16,6 +18,7 @@ abstract contract L1MessageService is
   Initializable,
   RateLimiter,
   L1MessageManager,
+  ReentrancyGuardUpgradeable,
   PauseManager,
   IMessageService,
   IGenericErrors
@@ -29,7 +32,7 @@ abstract contract L1MessageService is
   uint256[50] private __gap;
 
   // @dev adding these should not affect storage as they are constants and are store in bytecode
-  uint256 private constant REFUND_OVERHEAD_IN_GAS = 40000;
+  uint256 private constant REFUND_OVERHEAD_IN_GAS = 42000;
 
   /**
    * @notice Initialises underlying message service dependencies.
@@ -120,7 +123,7 @@ abstract contract L1MessageService is
     address payable _feeRecipient,
     bytes calldata _calldata,
     uint256 _nonce
-  ) external distributeFees(_fee, _to, _calldata, _feeRecipient) {
+  ) external nonReentrant distributeFees(_fee, _to, _calldata, _feeRecipient) {
     _requireTypeNotPaused(L2_L1_PAUSE_TYPE);
     _requireTypeNotPaused(GENERAL_PAUSE_TYPE);
 
@@ -199,7 +202,7 @@ abstract contract L1MessageService is
           deliveryFee = (startingGas + REFUND_OVERHEAD_IN_GAS - gasleft()) * tx.gasprice;
 
           if (_feeInWei > deliveryFee) {
-            _to.call{ value: (_feeInWei - deliveryFee) }("");
+            payable(_to).send(_feeInWei - deliveryFee);
           } else {
             deliveryFee = _feeInWei;
           }
@@ -207,7 +210,8 @@ abstract contract L1MessageService is
       }
 
       address feeReceiver = _feeRecipient == address(0) ? msg.sender : _feeRecipient;
-      (bool callSuccess, ) = feeReceiver.call{ value: deliveryFee }("");
+
+      bool callSuccess = payable(feeReceiver).send(deliveryFee);
       if (!callSuccess) {
         revert FeePaymentFailed(feeReceiver);
       }

@@ -11,6 +11,7 @@ import { Ownable2StepUpgradeable } from "@openzeppelin/contracts-upgradeable/acc
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import { BridgedToken } from "./BridgedToken.sol";
 import { MessageServiceBase } from "../messageService/MessageServiceBase.sol";
@@ -20,16 +21,34 @@ import { MessageServiceBase } from "../messageService/MessageServiceBase.sol";
  * @notice Contract to manage cross-chain ERC20 bridging.
  * @author ConsenSys Software Inc.
  */
-contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeable, MessageServiceBase {
+contract TokenBridge is
+  ITokenBridge,
+  PausableUpgradeable,
+  Ownable2StepUpgradeable,
+  MessageServiceBase,
+  ReentrancyGuardUpgradeable
+{
+  using SafeERC20Upgradeable for IERC20Upgradeable;
+
   // solhint-disable-next-line var-name-mixedcase
   bytes4 internal constant _PERMIT_SELECTOR =
     bytes4(keccak256(bytes("permit(address,address,uint256,uint256,uint8,bytes32,bytes32)")));
 
-  using SafeERC20Upgradeable for IERC20Upgradeable;
+  /// @notice used for the token metadata
+  bytes private constant metadataName = abi.encodeCall(IERC20MetadataUpgradeable.name, ());
+  bytes private constant metadataSymbol = abi.encodeCall(IERC20MetadataUpgradeable.symbol, ());
+  bytes private constant metadataDecimals = abi.encodeCall(IERC20MetadataUpgradeable.decimals, ());
 
   address public tokenBeacon;
-  mapping(address => address) public nativeToBridgedToken;
+  /// @notice mapping (chainId => nativeTokenAddress => brigedTokenAddress)
+  mapping(uint256 => mapping(address => address)) public nativeToBridgedToken;
+  /// @notice mapping (brigedTokenAddress => nativeTokenAddress)
   mapping(address => address) public bridgedToNativeToken;
+
+  /// @notice The current layer chainId from where the bridging is triggered
+  uint256 public sourceChainId;
+  /// @notice The targeted layer chainId where the bridging is received
+  uint256 public targetChainId;
 
   // Special addresses used in the mappings to mark specific states for tokens.
   /// @notice EMPTY means a token is not present in the mapping.
@@ -46,7 +65,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
 
   /// @dev Ensures the token has not been bridged before.
   modifier isNewToken(address _token) {
-    if (nativeToBridgedToken[_token] != EMPTY || bridgedToNativeToken[_token] != EMPTY)
+    if (nativeToBridgedToken[sourceChainId][_token] != EMPTY || bridgedToNativeToken[_token] != EMPTY)
       revert AlreadyBridgedToken(_token);
     _;
   }
@@ -78,21 +97,32 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
    * @dev Contract will be used as proxy implementation.
    * @param _messageService The address of the MessageService contract.
    * @param _tokenBeacon The address of the tokenBeacon.
+   * @param _sourceChainId The source chain id of the current layer
+   * @param _targetChainId The target chaind id of the targeted layer
    * @param _reservedTokens The list of reserved tokens to be set
    */
   function initialize(
     address _securityCouncil,
     address _messageService,
     address _tokenBeacon,
+    uint256 _sourceChainId,
+    uint256 _targetChainId,
     address[] calldata _reservedTokens
   ) external nonZeroAddress(_securityCouncil) nonZeroAddress(_messageService) nonZeroAddress(_tokenBeacon) initializer {
     __Pausable_init();
     __Ownable2Step_init();
     __MessageServiceBase_init(_messageService);
+    __ReentrancyGuard_init();
     tokenBeacon = _tokenBeacon;
-    for (uint256 i = 0; i < _reservedTokens.length; i++) {
-      if (_reservedTokens[i] == EMPTY) revert ZeroAddressNotAllowed();
-      setReserved(_reservedTokens[i]);
+    sourceChainId = _sourceChainId;
+    targetChainId = _targetChainId;
+
+    unchecked {
+      for (uint256 i; i < _reservedTokens.length; ) {
+        if (_reservedTokens[i] == EMPTY) revert ZeroAddressNotAllowed();
+        setReserved(_reservedTokens[i]);
+        ++i;
+      }
     }
     _transferOwnership(_securityCouncil);
   }
@@ -119,8 +149,8 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
     address _token,
     uint256 _amount,
     address _recipient
-  ) public payable nonZeroAddress(_token) nonZeroAddress(_recipient) nonZeroAmount(_amount) whenNotPaused {
-    address nativeMappingValue = nativeToBridgedToken[_token];
+  ) public payable nonZeroAddress(_token) nonZeroAddress(_recipient) nonZeroAmount(_amount) whenNotPaused nonReentrant {
+    address nativeMappingValue = nativeToBridgedToken[sourceChainId][_token];
 
     if (nativeMappingValue == RESERVED_STATUS) {
       // Token is reserved
@@ -129,29 +159,28 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
 
     address bridgedMappingValue = bridgedToNativeToken[_token];
     address nativeToken;
+    uint256 chainId;
     bytes memory tokenMetadata;
+
     if (bridgedMappingValue != EMPTY) {
       // Token is bridged
       BridgedToken(_token).burn(msg.sender, _amount);
       nativeToken = bridgedMappingValue;
+      chainId = targetChainId;
     } else {
       // Token is native
-
-      // Make sure that this token has not been bridged as a native token from the other layer
-      // If this is the case nativeMappingValue should be EMPTY or DEPLOYED or NATIVE if not we revert
-      if (nativeMappingValue != EMPTY && nativeMappingValue != DEPLOYED_STATUS && nativeMappingValue != NATIVE_STATUS) {
-        revert TokenNativeOnOtherLayer(_token);
-      }
 
       // For tokens with special fee logic, ensure that only the amount received
       // by the bridge will be minted on the target chain.
       uint256 balanceBefore = IERC20Upgradeable(_token).balanceOf(address(this));
       IERC20Upgradeable(_token).safeTransferFrom(msg.sender, address(this), _amount);
       _amount = IERC20Upgradeable(_token).balanceOf(address(this)) - balanceBefore;
+
       nativeToken = _token;
+
       if (nativeMappingValue == EMPTY) {
         // New token
-        nativeToBridgedToken[_token] = NATIVE_STATUS;
+        nativeToBridgedToken[sourceChainId][_token] = NATIVE_STATUS;
         emit NewToken(_token);
       }
 
@@ -159,12 +188,13 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
       if (nativeMappingValue != DEPLOYED_STATUS) {
         tokenMetadata = abi.encode(_safeName(_token), _safeSymbol(_token), _safeDecimals(_token));
       }
+      chainId = sourceChainId;
     }
 
     messageService.sendMessage{ value: msg.value }(
       remoteSender,
       msg.value, // fees
-      abi.encodeCall(ITokenBridge.completeBridging, (nativeToken, _amount, _recipient, tokenMetadata))
+      abi.encodeCall(ITokenBridge.completeBridging, (nativeToken, _amount, _recipient, chainId, tokenMetadata))
     );
     emit BridgingInitiated(msg.sender, _recipient, _token, _amount);
   }
@@ -198,6 +228,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
    * @param _nativeToken The address of the token on its native chain.
    * @param _amount The amount of the token to be received.
    * @param _recipient The address that will receive the tokens.
+   * @param _chainId The token's origin layer chaindId
    * @param _tokenMetadata Additional data used to deploy the bridged token if it
    *   doesn't exist already.
    */
@@ -205,9 +236,10 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
     address _nativeToken,
     uint256 _amount,
     address _recipient,
+    uint256 _chainId,
     bytes calldata _tokenMetadata
-  ) external onlyMessagingService onlyAuthorizedRemoteSender whenNotPaused {
-    address nativeMappingValue = nativeToBridgedToken[_nativeToken];
+  ) external nonReentrant onlyMessagingService onlyAuthorizedRemoteSender whenNotPaused {
+    address nativeMappingValue = nativeToBridgedToken[_chainId][_nativeToken];
     address bridgedToken;
 
     if (nativeMappingValue == NATIVE_STATUS || nativeMappingValue == DEPLOYED_STATUS) {
@@ -217,9 +249,9 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
       bridgedToken = nativeMappingValue;
       if (nativeMappingValue == EMPTY) {
         // New token
-        bridgedToken = deployBridgedToken(_nativeToken, _tokenMetadata);
+        bridgedToken = deployBridgedToken(_nativeToken, _tokenMetadata, sourceChainId);
         bridgedToNativeToken[bridgedToken] = _nativeToken;
-        nativeToBridgedToken[_nativeToken] = bridgedToken;
+        nativeToBridgedToken[targetChainId][_nativeToken] = bridgedToken;
       }
       BridgedToken(bridgedToken).mint(_recipient, _amount);
     }
@@ -230,7 +262,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
    * @dev Change the address of the Message Service.
    * @param _messageService The address of the new Message Service.
    */
-  function setMessageService(address _messageService) public onlyOwner {
+  function setMessageService(address _messageService) public nonZeroAddress(_messageService) onlyOwner {
     address oldMessageService = address(messageService);
     messageService = IMessageService(_messageService);
     emit MessageServiceUpdated(_messageService, oldMessageService, msg.sender);
@@ -269,10 +301,13 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
    */
   function setDeployed(address[] memory _nativeTokens) external onlyMessagingService onlyAuthorizedRemoteSender {
     address nativeToken;
-    for (uint256 i; i < _nativeTokens.length; i++) {
-      nativeToken = _nativeTokens[i];
-      nativeToBridgedToken[_nativeTokens[i]] = DEPLOYED_STATUS;
-      emit TokenDeployed(_nativeTokens[i]);
+    unchecked {
+      for (uint256 i; i < _nativeTokens.length; ) {
+        nativeToken = _nativeTokens[i];
+        nativeToBridgedToken[sourceChainId][_nativeTokens[i]] = DEPLOYED_STATUS;
+        emit TokenDeployed(_nativeTokens[i]);
+        ++i;
+      }
     }
   }
 
@@ -296,11 +331,12 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
    * @param _tokenMetadata The encoded metadata for the token.
    * @return The address of the newly deployed BridgedToken contract.
    */
-  function deployBridgedToken(address _nativeToken, bytes calldata _tokenMetadata) internal returns (address) {
-    bytes32 _salt;
-    assembly {
-      _salt := _nativeToken
-    }
+  function deployBridgedToken(
+    address _nativeToken,
+    bytes calldata _tokenMetadata,
+    uint256 chainId
+  ) internal returns (address) {
+    bytes32 _salt = keccak256(abi.encode(chainId, _nativeToken));
     BeaconProxy bridgedToken = new BeaconProxy{ salt: _salt }(tokenBeacon, "");
     address bridgedTokenAddress = address(bridgedToken);
 
@@ -314,11 +350,11 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
    * @dev Linea can reserve tokens. In this case, the token cannot be bridged.
    *   Linea can only reserve tokens that have not been bridged before.
    * @notice Make sure that you that _token is native to the current chain
-   * where you are calling this function from
+   *   where you are calling this function from
    * @param _token The address of the token to be set as reserved.
    */
-  function setReserved(address _token) public onlyOwner isNewToken(_token) nonZeroAddress(_token) {
-    nativeToBridgedToken[_token] = RESERVED_STATUS;
+  function setReserved(address _token) public nonZeroAddress(_token) onlyOwner isNewToken(_token) {
+    nativeToBridgedToken[sourceChainId][_token] = RESERVED_STATUS;
     emit TokenReserved(_token);
   }
 
@@ -326,9 +362,9 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
    * @dev Removes a token from the reserved list.
    * @param _token The address of the token to be removed from the reserved list.
    */
-  function removeReserved(address _token) external onlyOwner {
-    if (nativeToBridgedToken[_token] != RESERVED_STATUS) revert NotReserved(_token);
-    nativeToBridgedToken[_token] = EMPTY;
+  function removeReserved(address _token) external nonZeroAddress(_token) onlyOwner {
+    if (nativeToBridgedToken[sourceChainId][_token] != RESERVED_STATUS) revert NotReserved(_token);
+    nativeToBridgedToken[sourceChainId][_token] = EMPTY;
   }
 
   /**
@@ -341,14 +377,14 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
   function setCustomContract(
     address _nativeToken,
     address _targetContract
-  ) external onlyOwner isNewToken(_nativeToken) {
+  ) external nonZeroAddress(_nativeToken) nonZeroAddress(_targetContract) onlyOwner isNewToken(_nativeToken) {
     if (bridgedToNativeToken[_targetContract] != EMPTY) {
       revert AlreadyBrigedToNativeTokenSet(_targetContract);
     }
     if (_targetContract == NATIVE_STATUS || _targetContract == DEPLOYED_STATUS || _targetContract == RESERVED_STATUS) {
       revert StatusAddressNotAllowed(_targetContract);
     }
-    nativeToBridgedToken[_nativeToken] = _targetContract;
+    nativeToBridgedToken[targetChainId][_nativeToken] = _targetContract;
     bridgedToNativeToken[_targetContract] = _nativeToken;
     emit CustomContractSet(_nativeToken, _targetContract, msg.sender);
   }
@@ -375,7 +411,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
    * @param _token The address of the ERC-20 token contract
    */
   function _safeName(address _token) internal view returns (string memory) {
-    (bool success, bytes memory data) = _token.staticcall(abi.encodeCall(IERC20MetadataUpgradeable.name, ()));
+    (bool success, bytes memory data) = _token.staticcall(metadataName);
     return success ? _returnDataToString(data) : "NO_NAME";
   }
 
@@ -384,7 +420,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
    * @param _token The address of the ERC-20 token contract
    */
   function _safeSymbol(address _token) internal view returns (string memory) {
-    (bool success, bytes memory data) = _token.staticcall(abi.encodeCall(IERC20MetadataUpgradeable.symbol, ()));
+    (bool success, bytes memory data) = _token.staticcall(metadataSymbol);
     return success ? _returnDataToString(data) : "NO_SYMBOL";
   }
 
@@ -394,7 +430,7 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
    * @param _token The address of the ERC-20 token contract
    */
   function _safeDecimals(address _token) internal view returns (uint8) {
-    (bool success, bytes memory data) = _token.staticcall(abi.encodeCall(IERC20MetadataUpgradeable.decimals, ()));
+    (bool success, bytes memory data) = _token.staticcall(metadataDecimals);
     return success && data.length == 32 ? abi.decode(data, (uint8)) : 18;
   }
 
@@ -424,8 +460,9 @@ contract TokenBridge is ITokenBridge, PausableUpgradeable, Ownable2StepUpgradeab
     // Create a byte array with nonZeroBytes length
     bytes memory bytesArray = new bytes(nonZeroBytes);
     unchecked {
-      for (uint256 i = 0; i < nonZeroBytes; i++) {
+      for (uint256 i; i < nonZeroBytes; ) {
         bytesArray[i] = _data[i];
+        ++i;
       }
     }
     return string(bytesArray);

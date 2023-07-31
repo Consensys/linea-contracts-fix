@@ -22,6 +22,7 @@
     "fmt:sol": "prettier -w 'contracts/**/*.sol'"
   },
   "devDependencies": {
+    "@gnosis.pm/zodiac": "^3.3.2",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "@openzeppelin/contracts": "^4.9.2",
     "@openzeppelin/contracts-upgradeable": "^4.9.2",

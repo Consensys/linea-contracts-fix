@@ -112,6 +112,12 @@ function getRollupJsonPath(): string {
 }
 
 export {
-  MAX_GAS_LIMIT, getBatchType, getBatchTypeFromFileName, getBlockchainNode, getContractOwnerPrivateKey, getL2BlockchainNode, getRollupContractConfigPath,
-  getRollupJsonPath
+  MAX_GAS_LIMIT,
+  getBatchType,
+  getBatchTypeFromFileName,
+  getBlockchainNode,
+  getContractOwnerPrivateKey,
+  getL2BlockchainNode,
+  getRollupContractConfigPath,
+  getRollupJsonPath,
 };

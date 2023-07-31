@@ -79,7 +79,6 @@ const config: HardhatUserConfig = {
             url: l2BlockchainNode,
             accounts,
             allowUnlimitedContractSize: true,
-            timeout: 300000,
           },
         }
       : {}),

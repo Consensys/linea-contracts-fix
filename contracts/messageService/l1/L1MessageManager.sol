@@ -26,7 +26,11 @@ abstract contract L1MessageManager is IL1MessageManager {
   mapping(bytes32 => uint256) public inboxL2L1MessageStatus;
 
   /// @dev Keep free storage slots for future implementation updates to avoid storage collision.
-  uint256[50] private __gap;
+  // *******************************************************************************************
+  // NB: THIS GAP HAS BEEN PUSHED OUT IN FAVOUR OF THE GAP INSIDE THE REENTRANCY CODE
+  //uint256[50] private __gap;
+  // NB: DO NOT USE THIS GAP
+  // *******************************************************************************************
 
   /**
    * @notice Add a cross-chain L2->L1 message hash in storage.

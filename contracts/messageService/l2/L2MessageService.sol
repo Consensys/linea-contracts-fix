@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { CodecV2 } from "../lib/Codec.sol";
 import { IMessageService } from "../../interfaces/IMessageService.sol";
 import { IGenericErrors } from "../../interfaces/IGenericErrors.sol";
@@ -12,7 +13,14 @@ import { L2MessageManager } from "./L2MessageManager.sol";
  * @title Contract to manage cross-chain messaging on L2.
  * @author ConsenSys Software Inc.
  */
-contract L2MessageService is Initializable, RateLimiter, L2MessageManager, IMessageService, IGenericErrors {
+contract L2MessageService is
+  Initializable,
+  RateLimiter,
+  L2MessageManager,
+  ReentrancyGuardUpgradeable,
+  IMessageService,
+  IGenericErrors
+{
   // Keep free storage slots for future implementation updates to avoid storage collision.
   uint256[50] private __gap_L2MessageService;
 
@@ -27,7 +35,7 @@ contract L2MessageService is Initializable, RateLimiter, L2MessageManager, IMess
   uint256 public minimumFeeInWei;
 
   // @dev adding these should not affect storage as they are constants and are store in bytecode
-  uint256 private constant REFUND_OVERHEAD_IN_GAS = 45000;
+  uint256 private constant REFUND_OVERHEAD_IN_GAS = 47500;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -140,7 +148,7 @@ contract L2MessageService is Initializable, RateLimiter, L2MessageManager, IMess
     address payable _feeRecipient,
     bytes calldata _calldata,
     uint256 _nonce
-  ) external distributeFees(_fee, _to, _calldata, _feeRecipient) {
+  ) external nonReentrant distributeFees(_fee, _to, _calldata, _feeRecipient) {
     _requireTypeNotPaused(L1_L2_PAUSE_TYPE);
     _requireTypeNotPaused(GENERAL_PAUSE_TYPE);
 
@@ -224,7 +232,7 @@ contract L2MessageService is Initializable, RateLimiter, L2MessageManager, IMess
           deliveryFee = (startingGas + REFUND_OVERHEAD_IN_GAS - gasleft()) * tx.gasprice;
 
           if (_feeInWei > deliveryFee) {
-            _to.call{ value: (_feeInWei - deliveryFee) }("");
+            payable(_to).send(_feeInWei - deliveryFee);
           } else {
             deliveryFee = _feeInWei;
           }
@@ -232,7 +240,8 @@ contract L2MessageService is Initializable, RateLimiter, L2MessageManager, IMess
       }
 
       address feeReceiver = _feeRecipient == address(0) ? msg.sender : _feeRecipient;
-      (bool callSuccess, ) = feeReceiver.call{ value: deliveryFee }("");
+
+      bool callSuccess = payable(feeReceiver).send(deliveryFee);
       if (!callSuccess) {
         revert FeePaymentFailed(feeReceiver);
       }

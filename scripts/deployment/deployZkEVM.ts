@@ -1,5 +1,20 @@
 import { deployFromFactory, deployUpgradableFromFactory, requireEnv } from "../hardhat/utils";
 
+/*
+    *******************************************************************************************
+    1. Set the ZKEVMV2_INITIAL_STATE_ROOT_HASH
+    2. Set the ZKEVMV2_INITIAL_L2_BLOCK_NUMBER
+    3. Set the ZKEVMV2_SECURITY_COUNCIL 
+    4. Set the ZKEVMV2_OPERATORS 
+    5. Set the ZKEVMV2_RATE_LIMIT_PERIOD in Seconds
+    6. Set the ZKEVMV2_RATE_LIMIT_AMOUNT in Wei
+    *******************************************************************************************
+    NB: use the verifier.address output as input for scripts/deployment/setVerifierAddress.ts 
+    *******************************************************************************************
+    npx hardhat run --network zkevm_dev scripts/deployment/deployZkEVM.ts
+    *******************************************************************************************
+*/
+
 async function main() {
   const verifierContractName = process.env.VERIFIER_CONTRACT_NAME || "PlonkVerifier";
 
