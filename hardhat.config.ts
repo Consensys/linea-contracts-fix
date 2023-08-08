@@ -16,7 +16,7 @@ const ownerPrivateKey = getContractOwnerPrivateKey(
   "../node-data/test/keys/contract_owner.acc",
   "/node-data/test/keys/contract_owner.acc",
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  process.env.L1_ROLLUP_OWNER_PRIVATE_KEY!,
+  process.env.PRIVATE_KEY!,
 );
 
 const accounts = [];
@@ -67,6 +67,14 @@ const config: HardhatUserConfig = {
       gas: MAX_GAS_LIMIT,
       blockGasLimit: MAX_GAS_LIMIT,
       timeout: BLOCKCHAIN_TIMEOUT,
+    },
+    goerli: {
+      accounts: [process.env.GOERLI_PRIVATE_KEY ?? ""],
+      url: "https://goerli.infura.io/v3/" + process.env.INFURA_API_KEY
+    },
+    mainnet: {
+      accounts: [process.env.MAINNET_PRIVATE_KEY ?? "0000000000000000000000000000000000000000000000000000000000000000"],
+      url: "https://infura.io/v3/" + process.env.INFURA_API_KEY
     },
     zkevm_dev: {
       url: blockchainNode,

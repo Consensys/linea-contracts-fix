@@ -172,7 +172,7 @@ contract PlonkVerifierFull {
 
       // sanity checks
       check_inputs_size(public_inputs.length, public_inputs.offset)
-      check_proof_size(proof.length, proof.offset)
+      check_proof_size(proof.length)
       check_proof_openings_size(proof.offset)
 
       // compute the challenges
@@ -204,6 +204,15 @@ contract PlonkVerifierFull {
       success := mload(add(mem, state_success))
 
       // Beginning errors -------------------------------------------------
+      function error_ec_op() {
+        let ptError := mload(0x40)
+        mstore(ptError, error_string_id) // selector for function Error(string)
+        mstore(add(ptError, 0x4), 0x20)
+        mstore(add(ptError, 0x24), 0x12)
+        mstore(add(ptError, 0x44), "error ec operation")
+        revert(ptError, 0x64)
+      }
+
       function error_inputs_size() {
         let ptError := mload(0x40)
         mstore(ptError, error_string_id) // selector for function Error(string)
@@ -259,8 +268,7 @@ contract PlonkVerifierFull {
         }
       }
 
-      // the 'a' prepending proof in aproof stands for 'assembly'. It's just to not use again the name proof (not allowed)
-      function check_proof_size(actual_proof_size, aproof) {
+      function check_proof_size(actual_proof_size) {
         let expected_proof_size := add(0x340, mul(vk_nb_commitments_commit_api, 0x60))
         if iszero(eq(actual_proof_size, expected_proof_size)) {
           error_proof_size()
@@ -320,7 +328,7 @@ contract PlonkVerifierFull {
       }
       // end checks -------------------------------------------------
 
-      // // Beginning challenges -------------------------------------------------
+      // Beginning challenges -------------------------------------------------
 
       // Derive gamma as Sha256(<transcript>)
       // where transcript is the concatenation (in this order) of:
@@ -1113,47 +1121,51 @@ contract PlonkVerifierFull {
 
       // BEGINNING utils math functions -------------------------------------------------
       function point_add(dst, p, q, mPtr) {
-        // let mPtr := add(mload(0x40), state_last_mem)
         let state := mload(0x40)
         mstore(mPtr, mload(p))
         mstore(add(mPtr, 0x20), mload(add(p, 0x20)))
         mstore(add(mPtr, 0x40), mload(q))
         mstore(add(mPtr, 0x60), mload(add(q, 0x20)))
         let l_success := staticcall(gas(), 6, mPtr, 0x80, dst, 0x40)
-        mstore(add(state, state_success), and(l_success, mload(add(state, state_success))))
+        if iszero(l_success) {
+          error_ec_op()
+        }
       }
 
       function point_add_calldata(dst, p, q, mPtr) {
-        // let mPtr := add(mload(0x40), state_last_mem)
         let state := mload(0x40)
         mstore(mPtr, mload(p))
         mstore(add(mPtr, 0x20), mload(add(p, 0x20)))
         mstore(add(mPtr, 0x40), calldataload(q))
         mstore(add(mPtr, 0x60), calldataload(add(q, 0x20)))
         let l_success := staticcall(gas(), 6, mPtr, 0x80, dst, 0x40)
-        mstore(add(state, state_success), and(l_success, mload(add(state, state_success))))
+        if iszero(l_success) {
+          error_ec_op()
+        }
       }
 
-      // // dst <- [s]src
+      // dst <- [s]src
       function point_mul(dst, src, s, mPtr) {
-        // let mPtr := add(mload(0x40), state_last_mem)
         let state := mload(0x40)
         mstore(mPtr, mload(src))
         mstore(add(mPtr, 0x20), mload(add(src, 0x20)))
         mstore(add(mPtr, 0x40), s)
         let l_success := staticcall(gas(), 7, mPtr, 0x60, dst, 0x40)
-        mstore(add(state, state_success), and(l_success, mload(add(state, state_success))))
+        if iszero(l_success) {
+          error_ec_op()
+        }
       }
 
       // dst <- [s]src
       function point_mul_calldata(dst, src, s, mPtr) {
-        // let mPtr := add(mload(0x40), state_last_mem)
         let state := mload(0x40)
         mstore(mPtr, calldataload(src))
         mstore(add(mPtr, 0x20), calldataload(add(src, 0x20)))
         mstore(add(mPtr, 0x40), s)
         let l_success := staticcall(gas(), 7, mPtr, 0x60, dst, 0x40)
-        mstore(add(state, state_success), and(l_success, mload(add(state, state_success))))
+        if iszero(l_success) {
+          error_ec_op()
+        }
       }
 
       // dst <- dst + [s]src (Elliptic curve)
@@ -1166,7 +1178,9 @@ contract PlonkVerifierFull {
         mstore(add(mPtr, 0x40), mload(dst))
         mstore(add(mPtr, 0x60), mload(add(dst, 0x20)))
         l_success := and(l_success, staticcall(gas(), 6, mPtr, 0x80, dst, 0x40))
-        mstore(add(state, state_success), and(l_success, mload(add(state, state_success))))
+        if iszero(l_success) {
+          error_ec_op()
+        }
       }
 
       // dst <- dst + [s]src (Elliptic curve)
@@ -1179,7 +1193,9 @@ contract PlonkVerifierFull {
         mstore(add(mPtr, 0x40), mload(dst))
         mstore(add(mPtr, 0x60), mload(add(dst, 0x20)))
         l_success := and(l_success, staticcall(gas(), 6, mPtr, 0x80, dst, 0x40))
-        mstore(add(state, state_success), and(l_success, mload(add(state, state_success))))
+        if iszero(l_success) {
+          error_ec_op()
+        }
       }
 
       // dst <- dst + src (Fr) dst,src are addresses, s is a value
