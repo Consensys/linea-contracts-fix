@@ -156,13 +156,13 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
 
     uint256[] memory timestamps = new uint256[](_blocksData.length);
     bytes32[] memory blockHashes = new bytes32[](_blocksData.length);
-    bytes32[] memory hashOfRootHashes;
+    bytes32[] memory rootHashes;
 
     unchecked {
-      hashOfRootHashes = new bytes32[](_blocksData.length + 1);
+      rootHashes = new bytes32[](_blocksData.length + 1);
     }
 
-    hashOfRootHashes[0] = _parentStateRootHash;
+    rootHashes[0] = _parentStateRootHash;
 
     bytes32 hashOfTxHashes;
     bytes32 hashOfMessageHashes;
@@ -193,7 +193,7 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
       timestamps[i] = blockInfo.l2BlockTimestamp;
 
       unchecked {
-        hashOfRootHashes[i + 1] = blockInfo.blockRootHash;
+        rootHashes[i + 1] = blockInfo.blockRootHash;
       }
 
       emit BlockFinalized(currentBlockNumberTemp, blockInfo.blockRootHash);
@@ -217,7 +217,7 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
             keccak256(abi.encodePacked(blockHashes)),
             firstBlockNumber,
             keccak256(abi.encodePacked(timestamps)),
-            keccak256(abi.encodePacked(hashOfRootHashes))
+            keccak256(abi.encodePacked(rootHashes))
           )
         )
       );

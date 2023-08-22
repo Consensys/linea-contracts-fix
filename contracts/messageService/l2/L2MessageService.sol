@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import { CodecV2 } from "../lib/Codec.sol";
 import { IMessageService } from "../../interfaces/IMessageService.sol";
 import { IGenericErrors } from "../../interfaces/IGenericErrors.sol";
 import { RateLimiter } from "../lib/RateLimiter.sol";
