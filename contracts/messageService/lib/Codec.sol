@@ -11,7 +11,7 @@ library CodecV2 {
    * @notice Decodes a collection of bytes32 (hashes) from the calldata of a transaction.
    * @dev Extracts and decodes skipping the function selector (selector is expected in the input).
    * @dev A check beforehand must be performed to confirm this is the correct type of transaction.
-   * @dev A memory manipulation strips out the function signature, do not reuse.
+   * @dev NB: A memory manipulation strips out the function signature, do not reuse.
    * @param _calldataWithSelector The calldata for the transaction.
    * @return bytes32[] - array of message hashes.
    */
