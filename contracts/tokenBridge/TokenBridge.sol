@@ -16,7 +16,7 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { BridgedToken } from "./BridgedToken.sol";
 import { MessageServiceBase } from "../messageService/MessageServiceBase.sol";
 
-/**
+/*
  * @title Linea Canonical Token Bridge
  * @notice Contract to manage cross-chain ERC20 bridging.
  * @author ConsenSys Software Inc.
@@ -70,7 +70,7 @@ contract TokenBridge is
     _;
   }
 
-  /**
+  /*
    * @dev Ensures the address is not address(0).
    * @param _addr Address to check.
    */
@@ -78,7 +78,7 @@ contract TokenBridge is
     if (_addr == EMPTY) revert ZeroAddressNotAllowed();
     _;
   }
-  /**
+  /*
    * @dev Ensures the amount is not 0.
    * @param _amount amount to check.
    */
@@ -93,7 +93,7 @@ contract TokenBridge is
     _disableInitializers();
   }
 
-  /**
+  /*
    * @dev Contract will be used as proxy implementation.
    * @param _messageService The address of the MessageService contract.
    * @param _tokenBeacon The address of the tokenBeacon.
@@ -127,7 +127,7 @@ contract TokenBridge is
     _transferOwnership(_securityCouncil);
   }
 
-  /**
+  /*
    * @notice This function is the single entry point to bridge tokens to the
    *   other chain, both for native and already bridged tokens. You can use it
    *   to bridge any ERC20. If the token is bridged for the first time an ERC20
@@ -199,7 +199,7 @@ contract TokenBridge is
     emit BridgingInitiated(msg.sender, _recipient, _token, _amount);
   }
 
-  /**
+  /*
    * @notice Similar to `bridgeToken` function but allows to pass additional
    *   permit data to do the ERC20 approval in a single transaction.
    * @param _token The address of the token to be bridged.
@@ -219,7 +219,7 @@ contract TokenBridge is
     bridgeToken(_token, _amount, _recipient);
   }
 
-  /**
+  /*
    * @dev It can only be called from the Message Service. To finalize the bridging
    *   process, a user or postman needs to use the `claimMessage` function of the
    *   Message Service to trigger the transaction.
@@ -256,7 +256,7 @@ contract TokenBridge is
     emit BridgingFinalized(_nativeToken, bridgedToken, _amount, _recipient);
   }
 
-  /**
+  /*
    * @dev Change the address of the Message Service.
    * @param _messageService The address of the new Message Service.
    */
@@ -266,7 +266,7 @@ contract TokenBridge is
     emit MessageServiceUpdated(_messageService, oldMessageService, msg.sender);
   }
 
-  /**
+  /*
    * @dev Change the status to DEPLOYED to the tokens passed in parameter
    *    Will call the method setDeployed on the other chain using the message Service
    * @param _tokens Array of bridged tokens that have been deployed.
@@ -290,7 +290,7 @@ contract TokenBridge is
     emit DeploymentConfirmed(_tokens, msg.sender);
   }
 
-  /**
+  /*
    * @dev Change the status of tokens to DEPLOYED. New bridge transaction will not
    *   contain token metadata, which save gas.
    *   Can only be called from the Message Service. A user or postman needs to use
@@ -309,7 +309,7 @@ contract TokenBridge is
     }
   }
 
-  /**
+  /*
    * @dev Sets the address of the remote token bridge. Can only be called once.
    * @param _remoteTokenBridge The address of the remote token bridge to be set.
    */
@@ -319,7 +319,7 @@ contract TokenBridge is
     emit RemoteTokenBridgeSet(_remoteTokenBridge, msg.sender);
   }
 
-  /**
+  /*
    * @dev Deploy a new EC20 contract for bridged token using a beacon proxy pattern.
    *   To adapt to future requirements, Linea can update the implementation of
    *   all (existing and future) contracts by updating the beacon. This update is
@@ -344,7 +344,7 @@ contract TokenBridge is
     return bridgedTokenAddress;
   }
 
-  /**
+  /*
    * @dev Linea can reserve tokens. In this case, the token cannot be bridged.
    *   Linea can only reserve tokens that have not been bridged before.
    * @notice Make sure that you that _token is native to the current chain
@@ -356,7 +356,7 @@ contract TokenBridge is
     emit TokenReserved(_token);
   }
 
-  /**
+  /*
    * @dev Removes a token from the reserved list.
    * @param _token The address of the token to be removed from the reserved list.
    */
@@ -365,7 +365,7 @@ contract TokenBridge is
     nativeToBridgedToken[sourceChainId][_token] = EMPTY;
   }
 
-  /**
+  /*
    * @dev Linea can set a custom ERC20 contract for specific ERC20.
    *   For security purpose, Linea can only call this function if the token has
    *   not been bridged yet.
@@ -387,14 +387,14 @@ contract TokenBridge is
     emit CustomContractSet(_nativeToken, _targetContract, msg.sender);
   }
 
-  /**
+  /*
    * @dev Pause the contract, can only be called by the owner.
    */
   function pause() external onlyOwner {
     _pause();
   }
 
-  /**
+  /*
    * @dev Unpause the contract, can only be called by the owner.
    */
   function unpause() external onlyOwner {
@@ -404,7 +404,7 @@ contract TokenBridge is
   // Helpers to safely get the metadata from a token, inspired by
   // https://github.com/traderjoe-xyz/joe-core/blob/main/contracts/MasterChefJoeV3.sol#L55-L95
 
-  /**
+  /*
    * @dev Provides a safe ERC20.name version which returns 'NO_NAME' as fallback string.
    * @param _token The address of the ERC-20 token contract
    */
@@ -413,7 +413,7 @@ contract TokenBridge is
     return success ? _returnDataToString(data) : "NO_NAME";
   }
 
-  /**
+  /*
    * @dev Provides a safe ERC20.symbol version which returns 'NO_SYMBOL' as fallback string
    * @param _token The address of the ERC-20 token contract
    */
@@ -422,7 +422,7 @@ contract TokenBridge is
     return success ? _returnDataToString(data) : "NO_SYMBOL";
   }
 
-  /**
+  /*
    * @notice Provides a safe ERC20.decimals version which returns '18' as fallback value.
    *   Note Tokens with (decimals > 255) are not supported
    * @param _token The address of the ERC-20 token contract
@@ -432,7 +432,7 @@ contract TokenBridge is
     return success && data.length == 32 ? abi.decode(data, (uint8)) : 18;
   }
 
-  /**
+  /*
    * @dev Converts returned data to string. Returns 'NOT_VALID_ENCODING' as fallback value.
    * @param _data returned data
    */
@@ -466,7 +466,7 @@ contract TokenBridge is
     return string(bytesArray);
   }
 
-  /**
+  /*
    * @notice Call the token permit method of extended ERC20
    * @param _token ERC20 token address
    * @param _permitData Raw data of the call `permit` of the token

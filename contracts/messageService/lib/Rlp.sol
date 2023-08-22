@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-/**
+/*
  * @author Hamdi Allam hamdi.allam97@gmail.com
  * @notice Please reach out with any questions or concerns.
  */
@@ -29,7 +29,7 @@ library RLPReader {
     uint256 nextPtr; // Position of the next item in the list.
   }
 
-  /**
+  /*
    * @dev Returns the next element in the iteration. Reverts if it has no next element.
    * @param _self The iterator.
    * @return nextItem The next element in the iteration.
@@ -47,7 +47,7 @@ library RLPReader {
     nextItem.memPtr = ptr;
   }
 
-  /**
+  /*
    * @dev Returns the number 'skiptoNum' element in the iteration.
    * @param _self The iterator.
    * @param _skipToNum Element position in the RLP item iterator to return.
@@ -105,7 +105,7 @@ library RLPReader {
     item.memPtr = ptr;
   }
 
-  /**
+  /*
    * @dev Returns true if the iteration has more elements.
    * @param _self The iterator.
    * @return True if the iteration has more elements.
@@ -115,7 +115,7 @@ library RLPReader {
     return _self.nextPtr < item.memPtr + item.len;
   }
 
-  /**
+  /*
    * @param item RLP encoded bytes.
    * @return newItem The RLP item.
    */
@@ -130,7 +130,7 @@ library RLPReader {
     newItem.memPtr = memPtr;
   }
 
-  /**
+  /*
    * @dev Creates an iterator. Reverts if item is not a list.
    * @param _self The RLP item.
    * @return iterator 'Iterator' over the item.
@@ -145,7 +145,7 @@ library RLPReader {
     iterator.nextPtr = ptr;
   }
 
-  /**
+  /*
    * @param _item The RLP item.
    * @return (memPtr, len) Tuple: Location of the item's payload in memory.
    */
@@ -156,7 +156,7 @@ library RLPReader {
     return (memPtr, len);
   }
 
-  /**
+  /*
    * @param _item The RLP item.
    * @return Indicator whether encoded payload is a list.
    */
@@ -173,7 +173,7 @@ library RLPReader {
     return true;
   }
 
-  /**
+  /*
    * @param _item The RLP item.
    * @return result Returns the item as an address.
    */
@@ -186,7 +186,7 @@ library RLPReader {
     return address(uint160(_toUint(_item)));
   }
 
-  /**
+  /*
    * @param _item The RLP item.
    * @return result Returns the item as a uint256.
    */
@@ -207,7 +207,7 @@ library RLPReader {
     }
   }
 
-  /**
+  /*
    * @param _item The RLP item.
    * @return result Returns the item as bytes.
    */
@@ -231,7 +231,7 @@ library RLPReader {
    * Private Helpers
    */
 
-  /**
+  /*
    * @param _memPtr Item memory pointer.
    * @return Entire RLP item byte length.
    */
@@ -269,7 +269,7 @@ library RLPReader {
     return itemLen;
   }
 
-  /**
+  /*
    * @param _memPtr Item memory pointer.
    * @return Number of bytes until the data.
    */
@@ -287,7 +287,7 @@ library RLPReader {
     else return byte0 - (LIST_LONG_START - 1) + 1;
   }
 
-  /**
+  /*
    * @param _src Pointer to source.
    * @param _dest Pointer to destination.
    * @param _len Amount of memory to copy from the source.

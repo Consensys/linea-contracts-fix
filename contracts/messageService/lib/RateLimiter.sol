@@ -5,11 +5,11 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IRateLimiter } from "../../interfaces/IRateLimiter.sol";
 
-/**
+/*
  * @title Rate Limiter by period and amount using the block timestamp.
  * @author ConsenSys Software Inc.
  * @notice You can use this control numeric limits over a period using timestamp.
- **/
+ */
 contract RateLimiter is Initializable, IRateLimiter, AccessControlUpgradeable {
   bytes32 public constant RATE_LIMIT_SETTER_ROLE = keccak256("RATE_LIMIT_SETTER_ROLE");
 
@@ -26,11 +26,11 @@ contract RateLimiter is Initializable, IRateLimiter, AccessControlUpgradeable {
 
   uint256[10] private _gap;
 
-  /**
+  /*
    * @notice Initialises the limits and period for the rate limiter.
    * @param _periodInSeconds The length of the period in seconds.
    * @param _limitInWei The limit allowed in the period in Wei.
-   **/
+   */
   function __RateLimiter_init(uint256 _periodInSeconds, uint256 _limitInWei) internal onlyInitializing {
     if (_periodInSeconds == 0) {
       revert PeriodIsZero();
@@ -45,12 +45,12 @@ contract RateLimiter is Initializable, IRateLimiter, AccessControlUpgradeable {
     currentPeriodEnd = block.timestamp + _periodInSeconds;
   }
 
-  /**
+  /*
    * @notice Increments the amount used in the period.
    * @dev The amount determining logic is external to this (e.g. fees are included when calling here).
    * @dev Reverts if the limit is breached.
    * @param _usedAmount The amount used to be added.
-   **/
+   */
   function _addUsedAmount(uint256 _usedAmount) internal {
     uint256 currentPeriodAmountTemp;
 
@@ -68,14 +68,14 @@ contract RateLimiter is Initializable, IRateLimiter, AccessControlUpgradeable {
     currentPeriodAmountInWei = currentPeriodAmountTemp;
   }
 
-  /**
+  /*
    * @notice Resets the rate limit amount.
    * @dev If the used amount is higher, it is set to the limit to avoid confusion/issues.
    * @dev Only the RATE_LIMIT_SETTER_ROLE is allowed to execute this function.
    * @dev Emits the LimitAmountChanged event.
    * @dev usedLimitAmountToSet will use the default value of zero if period has expired
    * @param _amount The amount to reset the limit to.
-   **/
+   */
   function resetRateLimitAmount(uint256 _amount) external onlyRole(RATE_LIMIT_SETTER_ROLE) {
     uint256 usedLimitAmountToSet;
     bool amountUsedLoweredToLimit;
@@ -100,11 +100,11 @@ contract RateLimiter is Initializable, IRateLimiter, AccessControlUpgradeable {
     emit LimitAmountChanged(_msgSender(), _amount, amountUsedLoweredToLimit, usedAmountResetToZero);
   }
 
-  /**
+  /*
    * @notice Resets the amount used to zero.
    * @dev Only the RATE_LIMIT_SETTER_ROLE is allowed to execute this function.
    * @dev Emits the AmountUsedInPeriodReset event.
-   **/
+   */
   function resetAmountUsedInPeriod() external onlyRole(RATE_LIMIT_SETTER_ROLE) {
     currentPeriodAmountInWei = 0;
 

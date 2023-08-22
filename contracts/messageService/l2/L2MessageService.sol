@@ -9,7 +9,7 @@ import { IGenericErrors } from "../../interfaces/IGenericErrors.sol";
 import { RateLimiter } from "../lib/RateLimiter.sol";
 import { L2MessageManager } from "./L2MessageManager.sol";
 
-/**
+/*
  * @title Contract to manage cross-chain messaging on L2.
  * @author ConsenSys Software Inc.
  */
@@ -42,13 +42,13 @@ contract L2MessageService is
     _disableInitializers();
   }
 
-  /**
+  /*
    * @notice Initialises underlying message service dependencies.
    * @param _securityCouncil The address owning the security council role.
    * @param _l1l2MessageSetter The address owning the add L1L2MessageHashes functionality.
    * @param _rateLimitPeriod The period to rate limit against.
    * @param _rateLimitAmount The limit allowed for withdrawing the period.
-   **/
+   */
   function initialize(
     address _securityCouncil,
     address _l1l2MessageSetter,
@@ -79,13 +79,13 @@ contract L2MessageService is
     _messageSender = address(123456789);
   }
 
-  /**
+  /*
    * @notice Adds a message for sending cross-chain and emits a relevant event.
    * @dev The message number is preset and only incremented at the end if successful for the next caller.
    * @param _to The address the message is intended for.
    * @param _fee The fee being paid for the message delivery.
    * @param _calldata The calldata to pass to the recipient.
-   **/
+   */
   function sendMessage(address _to, uint256 _fee, bytes calldata _calldata) external payable {
     _requireTypeNotPaused(L2_L1_PAUSE_TYPE);
     _requireTypeNotPaused(GENERAL_PAUSE_TYPE);
@@ -128,7 +128,7 @@ contract L2MessageService is
     emit MessageSent(msg.sender, _to, postmanFee, valueSent, messageNumber, _calldata, messageHash);
   }
 
-  /**
+  /*
    * @notice Claims and delivers a cross-chain message.
    * @dev _feeRecipient Can be set to address(0) to receive as msg.sender.
    * @dev messageSender Is set temporarily when claiming and reset post.
@@ -139,7 +139,7 @@ contract L2MessageService is
    * @param _feeRecipient The recipient for the fee.
    * @param _calldata The calldata to pass to the recipient.
    * @param _nonce The unique auto generated message number used when sending the message.
-   **/
+   */
   function claimMessage(
     address _from,
     address _to,
@@ -175,33 +175,33 @@ contract L2MessageService is
     emit MessageClaimed(messageHash);
   }
 
-  /**
+  /*
    * @notice The Fee Manager sets a minimum fee to address DOS protection.
    * @param _feeInWei New minimum fee in Wei.
-   **/
+   */
   function setMinimumFee(uint256 _feeInWei) external onlyRole(MINIMUM_FEE_SETTER_ROLE) {
     minimumFeeInWei = _feeInWei;
   }
 
-  /**
+  /*
    * @dev The _messageSender address is set temporarily when claiming.
    * @return _messageSender address.
-   **/
+   */
   function sender() external view returns (address) {
     return _messageSender;
   }
 
-  /**
+  /*
    * @notice Function to receive funds for liquidity purposes.
-   **/
+   */
   receive() external payable virtual {}
 
-  /**
+  /*
    * @notice The unspent fee is refunded if applicable.
    * @param _feeInWei The fee paid for delivery in Wei.
    * @param _to The recipient of the message and gas refund.
    * @param _calldata The calldata of the message.
-   **/
+   */
   modifier distributeFees(
     uint256 _feeInWei,
     address _to,

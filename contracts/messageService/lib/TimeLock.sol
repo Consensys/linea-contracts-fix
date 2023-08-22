@@ -3,11 +3,11 @@ pragma solidity ^0.8.19;
 
 import { TimelockController } from "@openzeppelin/contracts/governance/TimelockController.sol";
 
-/**
+/*
  * @title TimeLock contract used to manage contract upgrades
  * @author ConsenSys Software Inc.
  * @notice This timelock contract will be the owner of all upgrades that gives users confidence and an ability to exit should they want to before an upgrade takes place
- **/
+ */
 contract TimeLock is TimelockController {
   constructor(
     uint256 minDelay,

@@ -35,7 +35,7 @@ interface ITokenBridge {
   error AlreadyBrigedToNativeTokenSet(address token);
   error StatusAddressNotAllowed(address token);
 
-  /**
+  /*
    * @notice Similar to `bridgeToken` function but allows to pass additional
    *   permit data to do the ERC20 approval in a single transaction.
    * @param _token The address of the token to be bridged.
@@ -50,7 +50,7 @@ interface ITokenBridge {
     bytes calldata _permitData
   ) external payable;
 
-  /**
+  /*
    * @dev It can only be called from the Message Service. To finalize the bridging
    *   process, a user or postmen needs to use the `claimMessage` function of the
    *   Message Service to trigger the transaction.
@@ -69,13 +69,13 @@ interface ITokenBridge {
     bytes calldata _tokenMetadata
   ) external;
 
-  /**
+  /*
    * @dev Change the address of the Message Service.
    * @param _messageService The address of the new Message Service.
    */
   function setMessageService(address _messageService) external;
 
-  /**
+  /*
    * @dev It can only be called from the Message Service. To change the status of
    *   the native tokens to DEPLOYED meaning they have been deployed on the other chain
    *   a user or postman needs to use the `claimMessage` function of the
@@ -84,19 +84,19 @@ interface ITokenBridge {
    */
   function setDeployed(address[] memory _nativeTokens) external;
 
-  /**
+  /*
    * @dev Sets the address of the remote token bridge. Can only be called once.
    * @param _remoteTokenBridge The address of the remote token bridge to be set.
    */
   function setRemoteTokenBridge(address _remoteTokenBridge) external;
 
-  /**
+  /*
    * @dev Removes a token from the reserved list.
    * @param _token The address of the token to be removed from the reserved list.
    */
   function removeReserved(address _token) external;
 
-  /**
+  /*
    * @dev Linea can set a custom ERC20 contract for specific ERC20.
    *   For security purpose, Linea can only call this function if the token has
    *   not been bridged yet.
@@ -105,12 +105,12 @@ interface ITokenBridge {
    */
   function setCustomContract(address _nativeToken, address _targetContract) external;
 
-  /**
+  /*
    * @dev Pause the contract, can only be called by the owner.
    */
   function pause() external;
 
-  /**
+  /*
    * @dev Unpause the contract, can only be called by the owner.
    */
   function unpause() external;

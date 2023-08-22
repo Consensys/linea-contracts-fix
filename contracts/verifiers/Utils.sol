@@ -29,7 +29,7 @@ library Utils {
   uint8 private constant one = 1;
   uint8 private constant two = 2;
 
-  /**
+  /*
    * @dev xmsg expands msg to a slice of lenInBytes bytes.
    *      https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-06#section-5
    *      https://tools.ietf.org/html/rfc8017#section-4.1 (I2OSP/O2ISP)

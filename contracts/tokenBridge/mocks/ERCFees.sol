@@ -8,7 +8,7 @@ uint16 constant FEES_PERCENTAGE_MULTIPLIER = 10000;
 contract ERC20Fees is ERC20 {
   uint16 public feePercentage;
 
-  /**
+  /*
    * @dev Constructor that gives _msgSender() all of existing tokens.
    * @param _tokenName string memory token name
    * @param _tokenSymbol string memory token symbol
