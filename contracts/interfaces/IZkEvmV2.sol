@@ -2,6 +2,14 @@
 pragma solidity ^0.8.19;
 
 interface IZkEvmV2 {
+  /*
+   * @dev blockRootHash is the calculated root hash of the block.
+   * @dev l2BlockTimestamp corresponds to the time the block was produced.
+   * @dev transactions is the transaction collection on the block RLP encoded.
+   * @dev l2ToL1MsgHashes collection contains all the hashes for L2 to L1 anchoring.
+   * @dev fromAddresses is a concatonation of all the from addresses for the transactions.
+   * @dev batchReceptionIndices defines which transactions in the collection are L2 to L1 messages.
+   */
   struct BlockData {
     bytes32 blockRootHash;
     uint32 l2BlockTimestamp;
