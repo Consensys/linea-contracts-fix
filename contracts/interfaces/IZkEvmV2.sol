@@ -26,7 +26,8 @@ interface IZkEvmV2 {
   event VerifierAddressChanged(
     address indexed verifierAddress,
     uint256 indexed proofType,
-    address indexed verifierSetBy
+    address indexed verifierSetBy,
+    address oldVerifierAddress
   );
 
   /**

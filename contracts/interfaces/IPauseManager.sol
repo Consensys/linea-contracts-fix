@@ -15,10 +15,10 @@ interface IPauseManager {
   /**
    * @dev Emitted when a pause type is paused.
    */
-  event Paused(address messageSender, bytes32 pauseType);
+  event Paused(address messageSender, bytes32 indexed pauseType);
 
   /**
    * @dev Emitted when a pause type is unpaused.
    */
-  event UnPaused(address messageSender, bytes32 pauseType);
+  event UnPaused(address messageSender, bytes32 indexed pauseType);
 }

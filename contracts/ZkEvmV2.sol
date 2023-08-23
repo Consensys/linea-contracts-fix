@@ -88,7 +88,7 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
       revert ZeroAddressNotAllowed();
     }
 
-    emit VerifierAddressChanged(_newVerifierAddress, _proofType, msg.sender);
+    emit VerifierAddressChanged(_newVerifierAddress, _proofType, msg.sender, verifiers[_proofType]);
 
     verifiers[_proofType] = _newVerifierAddress;
   }
