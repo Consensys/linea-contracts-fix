@@ -20,7 +20,7 @@ interface IL1MessageManager {
   /**
    * @dev Thrown when the message has already been claimed.
    */
-  error MessageDoesNotExistOrHasAlreadyBeenClaimed();
+  error MessageDoesNotExistOrHasAlreadyBeenClaimed(bytes32 messageHash);
 
   /**
    * @dev Thrown when the message has already been received.
