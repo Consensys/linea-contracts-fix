@@ -8,6 +8,7 @@ import { PauseManager } from "../lib/PauseManager.sol";
 /**
  * @title Contract to manage cross-chain message hashes storage and statuses on L2.
  * @author ConsenSys Software Inc.
+ * @custom:security-contact security-report@linea.build
  */
 abstract contract L2MessageManager is Initializable, PauseManager, IL2MessageManager {
   uint8 public constant INBOX_STATUS_UNKNOWN = 0;

@@ -7,6 +7,7 @@ import { IMessageService } from "../interfaces/IMessageService.sol";
 /**
  * @title Base contract to manage cross-chain messaging.
  * @author ConsenSys Software Inc.
+ * @custom:security-contact security-report@linea.build
  */
 abstract contract MessageServiceBase is Initializable {
   IMessageService public messageService;

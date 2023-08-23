@@ -12,6 +12,7 @@ import { L2MessageManager } from "./L2MessageManager.sol";
 /**
  * @title Contract to manage cross-chain messaging on L2.
  * @author ConsenSys Software Inc.
+ * @custom:security-contact security-report@linea.build
  */
 contract L2MessageService is
   Initializable,

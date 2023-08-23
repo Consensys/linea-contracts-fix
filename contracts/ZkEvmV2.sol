@@ -12,6 +12,7 @@ import { CodecV2 } from "./messageService/lib/Codec.sol";
 /**
  * @title Contract to manage cross-chain messaging on L1 and rollup proving.
  * @author ConsenSys Software Inc.
+ * @custom:security-contact security-report@linea.build
  */
 contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1MessageService {
   using TransactionDecoder for *;
