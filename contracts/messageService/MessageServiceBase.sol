@@ -3,12 +3,13 @@ pragma solidity ^0.8.19;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { IMessageService } from "../interfaces/IMessageService.sol";
+import { IGenericErrors } from "../interfaces/IGenericErrors.sol";
 
 /**
  * @title Base contract to manage cross-chain messaging.
  * @author ConsenSys Software Inc.
  */
-abstract contract MessageServiceBase is Initializable {
+abstract contract MessageServiceBase is Initializable, IGenericErrors {
   IMessageService public messageService;
   address public remoteSender;
 
@@ -23,11 +24,6 @@ abstract contract MessageServiceBase is Initializable {
    * @dev Thrown when remote sender address is not authorized.
    */
   error SenderNotAuthorized();
-
-  /**
-   * @dev Thrown when an address is the default zero address.
-   */
-  error ZeroAddressNotAllowed();
 
   /**
    * @dev Modifier to make sure the caller is the known message service.
