@@ -171,7 +171,7 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
       BlockData calldata blockInfo = _blocksData[i];
 
       if (blockInfo.l2BlockTimestamp >= block.timestamp) {
-        revert BlockTimestampError();
+        revert BlockTimestampError(blockInfo.l2BlockTimestamp, block.timestamp);
       }
 
       hashOfTxHashes = _processBlockTransactions(blockInfo.transactions, blockInfo.batchReceptionIndices);
