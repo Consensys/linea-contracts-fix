@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { IL1MessageManager } from "../../interfaces/IL1MessageManager.sol";
 
-/*
+/**
  * @title Contract to manage cross-chain message hashes storage and status on L1.
  * @author ConsenSys Software Inc.
  */
@@ -30,7 +30,7 @@ abstract contract L1MessageManager is IL1MessageManager {
   // NB: DO NOT USE THIS GAP
   // *******************************************************************************************
 
-  /*
+  /**
    * @notice Add a cross-chain L2->L1 message hash in storage.
    * @dev Once the event is emitted, it should be ready for claiming (post block finalization).
    * @param  _messageHash Hash of the message.
@@ -45,7 +45,7 @@ abstract contract L1MessageManager is IL1MessageManager {
     emit L2L1MessageHashAddedToInbox(_messageHash);
   }
 
-  /*
+  /**
    * @notice Update the status of L2->L1 message when a user claims a message on L1.
    * @dev The L2->L1 message is removed from storage.
    * @dev Due to the nature of the rollup, we should not get a second entry of this.
@@ -59,7 +59,7 @@ abstract contract L1MessageManager is IL1MessageManager {
     delete inboxL2L1MessageStatus[_messageHash];
   }
 
-  /*
+  /**
    * @notice Add L1->L2 message hash in storage when a message is sent on L1.
    * @param  _messageHash Hash of the message.
    */
@@ -67,7 +67,7 @@ abstract contract L1MessageManager is IL1MessageManager {
     outboxL1L2MessageStatus[_messageHash] = OUTBOX_STATUS_SENT;
   }
 
-  /*
+  /**
    * @notice Update the status of L1->L2 messages as received when messages has been stored on L2.
    * @dev The expectation here is that the rollup is limited to 100 hashes being added here - array is not open ended.
    * @param  _messageHashes List of message hashes.

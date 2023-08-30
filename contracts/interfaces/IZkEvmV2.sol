@@ -11,16 +11,16 @@ interface IZkEvmV2 {
     uint16[] batchReceptionIndices;
   }
 
-  /*
+  /**
    * @dev Emitted when a L2 block has been finalized on L1
    */
   event BlockFinalized(uint256 indexed blockNumber, bytes32 indexed stateRootHash);
-  /*
+  /**
    * @dev Emitted when a L2 blocks have been finalized on L1
    */
   event BlocksVerificationDone(uint256 indexed lastBlockFinalized, bytes32 startingRootHash, bytes32 finalRootHash);
 
-  /*
+  /**
    * @dev Emitted when a verifier is set for a particular proof type
    */
   event VerifierAddressChanged(
@@ -29,37 +29,37 @@ interface IZkEvmV2 {
     address indexed verifierSetBy
   );
 
-  /*
+  /**
    * @dev Thrown when l2 block timestamp is not correct
    */
   error BlockTimestampError();
 
-  /*
+  /**
    * @dev Thrown when the starting rootHash does not match the existing state
    */
   error StartingRootHashDoesNotMatch();
 
-  /*
+  /**
    * @dev Thrown when block contains zero transactions
    */
   error EmptyBlock();
 
-  /*
+  /**
    * @dev Thrown when zk proof is empty bytes
    */
   error ProofIsEmpty();
 
-  /*
+  /**
    * @dev Thrown when zk proof type is invalid
    */
   error InvalidProofType();
 
-  /*
+  /**
    * @dev Thrown when zk proof is invalid
    */
   error InvalidProof();
 
-  /*
+  /**
    * @notice Adds or updated the verifier contract address for a proof type
    * @dev DEFAULT_ADMIN_ROLE is required to execute
    * @param _newVerifierAddress The address for the verifier contract
@@ -67,14 +67,14 @@ interface IZkEvmV2 {
    */
   function setVerifierAddress(address _newVerifierAddress, uint256 _proofType) external;
 
-  /*
+  /**
    * @notice Finalizes blocks without using a proof
    * @dev DEFAULT_ADMIN_ROLE is required to execute
    * @param _calldata The full BlockData collection - block, transaction and log data
    */
   function finalizeBlocksWithoutProof(BlockData[] calldata _calldata) external;
 
-  /*
+  /**
    * @notice Finalizes blocks without using a proof
    * @dev OPERATOR_ROLE is required to execute
    * @dev If the verifier based on proof type is not found, it defaults to the default verifier type

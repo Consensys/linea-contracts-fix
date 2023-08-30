@@ -10,7 +10,7 @@ contract MockMessageServiceV2 is L1MessageManager, IMessageService, PauseManager
   address internal messageSender = address(0);
   uint256 public nextMessageNumber = 1;
 
-  /*
+  /**
    * @notice Adds a message for sending cross-chain and emits MessageSent.
    * @dev The message number is preset (nextMessageNumber) and only incremented at the end if successful for the next caller.
    * @dev This function should be called with a msg.value = _value + _fee. The fee will be paid on the destination chain.

@@ -5,7 +5,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { IL2MessageManager } from "../../interfaces/IL2MessageManager.sol";
 import { PauseManager } from "../lib/PauseManager.sol";
 
-/*
+/**
  * @title Contract to manage cross-chain message hashes storage and statuses on L2.
  * @author ConsenSys Software Inc.
  */
@@ -18,7 +18,7 @@ abstract contract L2MessageManager is Initializable, PauseManager, IL2MessageMan
 
   bytes32 public constant L1_L2_MESSAGE_SETTER_ROLE = keccak256("L1_L2_MESSAGE_SETTER_ROLE");
 
-  /*
+  /**
    * @dev Mapping to store L1->L2 message hashes status.
    * @dev messageHash => messageStatus (0: unknown, 1: received, 2: claimed).
    */
@@ -31,7 +31,7 @@ abstract contract L2MessageManager is Initializable, PauseManager, IL2MessageMan
   // NB: DO NOT USE THIS GAP
   // *******************************************************************************************
 
-  /*
+  /**
    * @notice Initialises L2 message manager contract.
    * @param _l1l2MessageSetter The address owning the L1_L2_MESSAGE_SETTER_ROLE role.
    */
@@ -39,7 +39,7 @@ abstract contract L2MessageManager is Initializable, PauseManager, IL2MessageMan
     _grantRole(L1_L2_MESSAGE_SETTER_ROLE, _l1l2MessageSetter);
   }
 
-  /*
+  /**
    * @notice Add a cross-chain L1->L2 message hashes in storage.
    * @dev Only address that has the role 'L1_L2_MESSAGE_SETTER_ROLE' are allowed to call this function.
    * @param _messageHashes Message hashes array.
@@ -64,7 +64,7 @@ abstract contract L2MessageManager is Initializable, PauseManager, IL2MessageMan
     emit L1L2MessageHashesAddedToInbox(_messageHashes);
   }
 
-  /*
+  /**
    * @notice Update the status of L1->L2 message when a user claims  a message on L2.
    * @param _messageHash Hash of the message.
    */

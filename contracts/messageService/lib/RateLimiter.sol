@@ -5,7 +5,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IRateLimiter } from "../../interfaces/IRateLimiter.sol";
 
-/*
+/**
  * @title Rate Limiter by period and amount using the block timestamp.
  * @author ConsenSys Software Inc.
  * @notice You can use this control numeric limits over a period using timestamp.
@@ -26,7 +26,7 @@ contract RateLimiter is Initializable, IRateLimiter, AccessControlUpgradeable {
 
   uint256[10] private _gap;
 
-  /*
+  /**
    * @notice Initialises the limits and period for the rate limiter.
    * @param _periodInSeconds The length of the period in seconds.
    * @param _limitInWei The limit allowed in the period in Wei.
@@ -45,7 +45,7 @@ contract RateLimiter is Initializable, IRateLimiter, AccessControlUpgradeable {
     currentPeriodEnd = block.timestamp + _periodInSeconds;
   }
 
-  /*
+  /**
    * @notice Increments the amount used in the period.
    * @dev The amount determining logic is external to this (e.g. fees are included when calling here).
    * @dev Reverts if the limit is breached.
@@ -68,7 +68,7 @@ contract RateLimiter is Initializable, IRateLimiter, AccessControlUpgradeable {
     currentPeriodAmountInWei = currentPeriodAmountTemp;
   }
 
-  /*
+  /**
    * @notice Resets the rate limit amount.
    * @dev If the used amount is higher, it is set to the limit to avoid confusion/issues.
    * @dev Only the RATE_LIMIT_SETTER_ROLE is allowed to execute this function.
@@ -100,7 +100,7 @@ contract RateLimiter is Initializable, IRateLimiter, AccessControlUpgradeable {
     emit LimitAmountChanged(_msgSender(), _amount, amountUsedLoweredToLimit, usedAmountResetToZero);
   }
 
-  /*
+  /**
    * @notice Resets the amount used to zero.
    * @dev Only the RATE_LIMIT_SETTER_ROLE is allowed to execute this function.
    * @dev Emits the AmountUsedInPeriodReset event.

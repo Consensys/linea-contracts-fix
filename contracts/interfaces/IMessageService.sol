@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 interface IMessageService {
-  /*
+  /**
    * @dev Emitted when a message is sent.
    * @dev We include the message hash to save hashing costs on the rollup.
    */
@@ -16,38 +16,38 @@ interface IMessageService {
     bytes32 indexed _messageHash
   );
 
-  /*
+  /**
    * @dev Emitted when a message is claimed.
    */
   event MessageClaimed(bytes32 indexed _messageHash);
 
-  /*
+  /**
    * @dev Thrown when fees are lower than the minimum fee.
    */
   error FeeTooLow();
 
-  /*
+  /**
    * @dev Thrown when fees are lower than value.
    */
   error ValueShouldBeGreaterThanFee();
 
-  /*
+  /**
    * @dev Thrown when the value sent is less than the fee.
    * @dev Value to forward on is msg.value - _fee.
    */
   error ValueSentTooLow();
 
-  /*
+  /**
    * @dev Thrown when the destination address reverts.
    */
   error MessageSendingFailed(address destination);
 
-  /*
+  /**
    * @dev Thrown when the destination address reverts.
    */
   error FeePaymentFailed(address recipient);
 
-  /*
+  /**
    * @notice Sends a message for transporting from the given chain.
    * @dev This function should be called with a msg.value = _value + _fee. The fee will be paid on the destination chain.
    * @param _to The destination address on the destination chain.
@@ -56,7 +56,7 @@ interface IMessageService {
    */
   function sendMessage(address _to, uint256 _fee, bytes calldata _calldata) external payable;
 
-  /*
+  /**
    * @notice Deliver a message to the destination chain.
    * @notice Is called automatically by the Postman, dApp or end user.
    * @param _from The msg.sender calling the origin message service.
@@ -77,7 +77,7 @@ interface IMessageService {
     uint256 _nonce
   ) external;
 
-  /*
+  /**
    * @notice Returns the original sender of the message on the origin layer.
    * @return The original sender of the message on the origin layer.
    */

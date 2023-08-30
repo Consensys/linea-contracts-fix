@@ -9,7 +9,7 @@ import { IZkEvmV2 } from "./interfaces/IZkEvmV2.sol";
 import { IPlonkVerifier } from "./interfaces/IPlonkVerifier.sol";
 import { CodecV2 } from "./messageService/lib/Codec.sol";
 
-/*
+/**
  * @title Contract to manage cross-chain messaging on L1 and rollup proving.
  * @author ConsenSys Software Inc.
  */
@@ -33,7 +33,7 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
     _disableInitializers();
   }
 
-  /*
+  /**
    * @notice Initializes zkEvm and underlying service dependencies.
    * @dev DEFAULT_ADMIN_ROLE is set for the security council.
    * @dev OPERATOR_ROLE is set for operators.
@@ -77,7 +77,7 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
     stateRootHashes[_initialL2BlockNumber] = _initialStateRootHash;
   }
 
-  /*
+  /**
    * @notice Adds or updates the verifier contract address for a proof type.
    * @dev DEFAULT_ADMIN_ROLE is required to execute.
    * @param _newVerifierAddress The address for the verifier contract.
@@ -93,7 +93,7 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
     verifiers[_proofType] = _newVerifierAddress;
   }
 
-  /*
+  /**
    * @notice Finalizes blocks without using a proof.
    * @dev DEFAULT_ADMIN_ROLE is required to execute.
    * @dev _blocksData[0].fromAddresses is a temporary workaround to pass bytes calldata
@@ -105,7 +105,7 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
     _finalizeBlocks(_blocksData, _blocksData[0].fromAddresses, 0, bytes32(0), false);
   }
 
-  /*
+  /**
    * @notice Finalizes blocks using a proof.
    * @dev OPERATOR_ROLE is required to execute.
    * @dev If the verifier based on proof type is not found, it reverts.
@@ -132,7 +132,7 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
     _finalizeBlocks(_blocksData, _proof, _proofType, _parentStateRootHash, true);
   }
 
-  /*
+  /**
    * @notice Finalizes blocks with or without using a proof depending on _shouldProve
    * @dev If the verifier based on proof type is not found, it reverts.
    * @param _blocksData The full BlockData collection - block, transaction and log data.
@@ -230,7 +230,7 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
     }
   }
 
-  /*
+  /**
    * @notice Hashes all transactions individually and then hashes the packed hash array.
    * @dev Updates the outbox status on L1 as received.
    * @param _transactions The transactions in a particular block.
@@ -266,7 +266,7 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
     hashOfTxHashes = keccak256(abi.encodePacked(transactionHashes));
   }
 
-  /*
+  /**
    * @notice Anchors message hashes and hashes the packed hash array.
    * @dev Also adds L2->L1 sent message hashes for later claiming.
    * @param _messageHashes The hashes in the message sent event logs.
@@ -282,7 +282,7 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
     hashOfLogHashes = keccak256(abi.encodePacked(_messageHashes));
   }
 
-  /*
+  /**
    * @notice Verifies the proof with locally computed public inputs.
    * @dev If the verifier based on proof type is not found, it reverts with InvalidProofType.
    * @param _publicInputHash The full BlockData collection - block, transaction and log data.

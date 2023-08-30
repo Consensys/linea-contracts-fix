@@ -3,14 +3,14 @@ pragma solidity 0.8.19;
 
 import { ERC20PermitUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 
-/*
+/**
  * @title BridgedToken Contract
  * @notice ERC20 token created when a native token is bridged to a target chain.
  */
 contract BridgedToken is ERC20PermitUpgradeable {
   address public bridge;
   uint8 public _decimals;
-  /*
+  /**
    * @notice Initializes the BridgedToken contract.
    * @dev Disables OpenZeppelin's initializer mechanism for safety.
    */
@@ -39,7 +39,7 @@ contract BridgedToken is ERC20PermitUpgradeable {
     _;
   }
 
-  /*
+  /**
    * @dev Called by the bridge to mint tokens during a bridge transaction.
    * @param _recipient The address to receive the minted tokens.
    * @param _amount The amount of tokens to mint.
@@ -48,7 +48,7 @@ contract BridgedToken is ERC20PermitUpgradeable {
     _mint(_recipient, _amount);
   }
 
-  /*
+  /**
    * @dev Called by the bridge to burn tokens during a bridge transaction.
    * @dev User should first have allowed the bridge to spend tokens on their behalf.
    * @param _account The account from which tokens will be burned.
@@ -59,7 +59,7 @@ contract BridgedToken is ERC20PermitUpgradeable {
     _burn(_account, _amount);
   }
 
-  /*
+  /**
    * @dev Overrides ERC20 default function to support tokens with different decimals.
    * @return The number of decimal.
    */

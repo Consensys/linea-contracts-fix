@@ -8,7 +8,7 @@ import { IGenericErrors } from "../../interfaces/IGenericErrors.sol";
 import { RateLimiter } from "../lib/RateLimiter.sol";
 import { L2MessageManager } from "./L2MessageManager.sol";
 
-/*
+/**
  * @title Contract to manage cross-chain messaging on L2.
  * @author ConsenSys Software Inc.
  */
@@ -41,7 +41,7 @@ contract L2MessageService is
     _disableInitializers();
   }
 
-  /*
+  /**
    * @notice Initialises underlying message service dependencies.
    * @param _securityCouncil The address owning the security council role.
    * @param _l1l2MessageSetter The address owning the add L1L2MessageHashes functionality.
@@ -78,7 +78,7 @@ contract L2MessageService is
     _messageSender = address(123456789);
   }
 
-  /*
+  /**
    * @notice Adds a message for sending cross-chain and emits a relevant event.
    * @dev The message number is preset and only incremented at the end if successful for the next caller.
    * @param _to The address the message is intended for.
@@ -127,7 +127,7 @@ contract L2MessageService is
     emit MessageSent(msg.sender, _to, postmanFee, valueSent, messageNumber, _calldata, messageHash);
   }
 
-  /*
+  /**
    * @notice Claims and delivers a cross-chain message.
    * @dev _feeRecipient Can be set to address(0) to receive as msg.sender.
    * @dev messageSender Is set temporarily when claiming and reset post.
@@ -174,7 +174,7 @@ contract L2MessageService is
     emit MessageClaimed(messageHash);
   }
 
-  /*
+  /**
    * @notice The Fee Manager sets a minimum fee to address DOS protection.
    * @param _feeInWei New minimum fee in Wei.
    */
@@ -182,7 +182,7 @@ contract L2MessageService is
     minimumFeeInWei = _feeInWei;
   }
 
-  /*
+  /**
    * @dev The _messageSender address is set temporarily when claiming.
    * @return _messageSender address.
    */
@@ -190,12 +190,12 @@ contract L2MessageService is
     return _messageSender;
   }
 
-  /*
+  /**
    * @notice Function to receive funds for liquidity purposes.
    */
   receive() external payable virtual {}
 
-  /*
+  /**
    * @notice The unspent fee is refunded if applicable.
    * @param _feeInWei The fee paid for delivery in Wei.
    * @param _to The recipient of the message and gas refund.

@@ -6,7 +6,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IPauseManager } from "../../interfaces/IPauseManager.sol";
 
-/*
+/**
  * @title Contract to manage cross-chain function pausing.
  * @author ConsenSys Software Inc.
  */
@@ -22,7 +22,7 @@ abstract contract PauseManager is Initializable, IPauseManager, AccessControlUpg
 
   uint256[10] private _gap;
 
-  /*
+  /**
    * @dev Modifier to make a function callable only when the type is not paused.
    *
    * Requirements:
@@ -34,7 +34,7 @@ abstract contract PauseManager is Initializable, IPauseManager, AccessControlUpg
     _;
   }
 
-  /*
+  /**
    * @dev Modifier to make a function callable only when the type is paused.
    *
    * Requirements:
@@ -46,7 +46,7 @@ abstract contract PauseManager is Initializable, IPauseManager, AccessControlUpg
     _;
   }
 
-  /*
+  /**
    * @dev Throws if the type is not paused.
    * @param _pauseType The keccak256 pause type being checked.
    */
@@ -56,7 +56,7 @@ abstract contract PauseManager is Initializable, IPauseManager, AccessControlUpg
     }
   }
 
-  /*
+  /**
    * @dev Throws if the type is paused.
    * @param _pauseType The keccak256 pause type being checked.
    */
@@ -66,7 +66,7 @@ abstract contract PauseManager is Initializable, IPauseManager, AccessControlUpg
     }
   }
 
-  /*
+  /**
    * @notice Pauses functionality by specific type.
    * @dev Requires PAUSE_MANAGER_ROLE.
    * @param _pauseType keccak256 pause type.
@@ -76,7 +76,7 @@ abstract contract PauseManager is Initializable, IPauseManager, AccessControlUpg
     emit Paused(_msgSender(), _pauseType);
   }
 
-  /*
+  /**
    * @notice Unpauses functionality by specific type.
    * @dev Requires PAUSE_MANAGER_ROLE.
    * @param _pauseType keccak256 pause type.

@@ -7,22 +7,22 @@ using RLPReader for RLPReader.RLPItem;
 using RLPReader for RLPReader.Iterator;
 using RLPReader for bytes;
 
-/*
+/**
  * dev Thrown when the transaction data length is too short.
  */
 error TransactionShort();
 
-/*
+/**
  * dev Thrown when the transaction type is unknown.
  */
 error UnknownTransactionType();
 
-/*
+/**
  * @title Contract to decode RLP formatted transactions.
  * @author ConsenSys Software Inc.
  */
 library TransactionDecoder {
-  /*
+  /**
    * @notice Decodes the transaction extracting the calldata.
    * @param _transaction The RLP transaction.
    * @return data Returns the transaction calldata as bytes.
@@ -49,7 +49,7 @@ library TransactionDecoder {
     revert UnknownTransactionType();
   }
 
-  /*
+  /**
    * @notice Decodes the EIP1559 transaction extracting the calldata.
    * @param _transaction The RLP transaction.
    * @return data Returns the transaction calldata as bytes.
@@ -63,7 +63,7 @@ library TransactionDecoder {
     data = it._skipTo(8)._toBytes();
   }
 
-  /*
+  /**
    * @notice Decodes the EIP2930 transaction extracting the calldata.
    * @param _transaction The RLP transaction.
    * @return data Returns the transaction calldata as bytes.
@@ -77,7 +77,7 @@ library TransactionDecoder {
     data = it._skipTo(7)._toBytes();
   }
 
-  /*
+  /**
    * @notice Decodes the legacy transaction extracting the calldata.
    * @param _transaction The RLP transaction.
    * @return data Returns the transaction calldata as bytes.
