@@ -21,6 +21,8 @@ contract L2MessageService is
   IGenericErrors
 {
   // Keep free storage slots for future implementation updates to avoid storage collision.
+  // @dev NB: Take note that this is at the beginning of the file where other storage gaps,
+  // are at the end of files. Be careful with how storage is adjusted on upgrades.
   uint256[50] private __gap_L2MessageService;
 
   bytes32 public constant MINIMUM_FEE_SETTER_ROLE = keccak256("MINIMUM_FEE_SETTER_ROLE");
