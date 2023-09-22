@@ -527,7 +527,6 @@ contract PlonkVerifier {
       /// batch_compute_lagranges_at_z computes [L_0(z), .., L_{n-1}(z)]
       /// @param z point at which the Lagranges are evaluated
       /// @param zpnmo ζⁿ-1
-      /// @param vk_inv_domain_size modular inverse mod R_MOD of the size of system
       /// @param n number of public inputs (number of Lagranges to compute)
       /// @param mPtr pointer to which the results are stored
       function batch_compute_lagranges_at_z(z, zpnmo, n, mPtr) {
@@ -583,7 +582,7 @@ contract PlonkVerifier {
       }
 
       
-      /// Public inputs (the ones coming form the custom gate) contribution
+      /// Public inputs (the ones coming from the custom gate) contribution
       /// @param aproof pointer to the proof
       /// @param nb_public_inputs number of public inputs
       /// @param mPtr pointer to free memory
@@ -1049,6 +1048,7 @@ contract PlonkVerifier {
       /// where
       /// * id_1 = id, id_2 = vk_coset_shift*id, id_3 = vk_coset_shift^{2}*id
       /// * the [] means that it's a commitment (i.e. a point on Bn254(F_p))
+      /// @param aproof pointer to the proof
       function compute_commitment_linearised_polynomial(aproof) {
         let state := mload(0x40)
         let l_beta := mload(add(state, state_beta))
@@ -1220,7 +1220,7 @@ contract PlonkVerifier {
       /// @param dst pointer accumulator point storing the result
       /// @param src pointer to the point to multiply and add
       /// @param s scalar
-      /// @mPtr free memory
+      /// @param mPtr free memory
       function point_acc_mul(dst,src,s, mPtr) {
         let state := mload(0x40)
         mstore(mPtr,mload(src))
