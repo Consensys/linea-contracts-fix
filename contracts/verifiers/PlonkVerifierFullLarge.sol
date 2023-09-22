@@ -80,12 +80,12 @@ contract PlonkVerifier {
   uint256 private constant proof_o_com_y = 0xa0;
 
   // h = h_0 + x^{n+2}h_1 + x^{2(n+2)}h_2
-  uint256 private constant proof_h_0_com_x = 0xc0;
-  uint256 private constant proof_h_0_com_y = 0xe0;
-  uint256 private constant proof_h_1_com_x = 0x100;
-  uint256 private constant proof_h_1_com_y = 0x120;
-  uint256 private constant proof_h_2_com_x = 0x140;
-  uint256 private constant proof_h_2_com_y = 0x160;
+  uint256 private constant proof_h_0_x = 0xc0;
+  uint256 private constant proof_h_0_y = 0xe0;
+  uint256 private constant proof_h_1_x = 0x100;
+  uint256 private constant proof_h_1_y = 0x120;
+  uint256 private constant proof_h_2_x = 0x140;
+  uint256 private constant proof_h_2_y = 0x160;
 
   // wire values at zeta
   uint256 private constant proof_l_at_zeta = 0x180;
@@ -442,7 +442,7 @@ contract PlonkVerifier {
         // zeta
         mstore(mPtr, 0x7a657461) // "zeta"
         mstore(add(mPtr, 0x20), alpha_not_reduced)
-        calldatacopy(add(mPtr, 0x40), add(aproof, proof_h_0_com_x), 0xc0)
+        calldatacopy(add(mPtr, 0x40), add(aproof, proof_h_0_x), 0xc0)
         let l_success := staticcall(gas(), 0x2, add(mPtr, 0x1c), 0xe4, mPtr, 0x20)
         if iszero(l_success) {
           error_verify()
@@ -454,7 +454,7 @@ contract PlonkVerifier {
 
       // BEGINNING compute_pi -------------------------------------------------
 
-      // public input (not comming from the commit api) contribution
+      // public input (not coming from the commit api) contribution
       // ins, n are the public inputs and number of public inputs respectively
       function sum_pi_wo_api_commit(ins, n, mPtr)->pi_wo_commit {
         
@@ -479,7 +479,7 @@ contract PlonkVerifier {
       // mPtr <- [L_0(z), .., L_{n-1}(z)]
       // 
       // Here L_i(zeta) =  ωⁱ/n * (ζⁿ-1)/(ζ-ωⁱ) where:
-      // * n = nb_public_inputs
+      // * n = vk_domain_size
       // * ω = vk_omega (generator of the multiplicative cyclic group of order n in (ℤ/rℤ)*)
       // * ζ = z (challenge derived with Fiat Shamir)
       // * zpnmo = 'zeta power n minus one' (ζⁿ-1) which has been precomputed
@@ -662,7 +662,7 @@ contract PlonkVerifier {
           error_verify()
         }
 
-        // at this point we have mPtr = [ b1 || b2] where b1 is on 32byes and b2 in 16bytes.
+        // at this point we have mPtr = [ b1 || b2] where b1 is on 32 bytes and b2 is 16 bytes.
         // we interpret it as a big integer mod r in big endian (similar to regular decimal notation)
         // the result is then 2**(8*16)*mPtr[32:] + mPtr[32:48]
         res := mulmod(mload(mPtr), bb, r_mod) // <- res = 2**128 * mPtr[:32]
@@ -771,7 +771,7 @@ contract PlonkVerifier {
       }
 
       // check_pairing_kzg checks the result of the final pairing product of the batched
-      // kzg verification. The purpose of this function is too avoid exhausting the stack
+      // kzg verification. The purpose of this function is to avoid exhausting the stack
       // in the function batch_verify_multi_points.
       // mPtr: pointer storing the tuple of pairs
       function check_pairing_kzg(mPtr) {
@@ -1041,10 +1041,10 @@ contract PlonkVerifier {
         let n_plus_two := add(vk_domain_size, 2)
         let mPtr := add(mload(0x40), state_last_mem)
         let zeta_power_n_plus_two := pow(mload(add(state, state_zeta)), n_plus_two, mPtr)
-        point_mul_calldata(add(state, state_folded_h_x), add(aproof, proof_h_2_com_x), zeta_power_n_plus_two, mPtr)
-        point_add_calldata(add(state, state_folded_h_x), add(state, state_folded_h_x), add(aproof, proof_h_1_com_x), mPtr)
+        point_mul_calldata(add(state, state_folded_h_x), add(aproof, proof_h_2_x), zeta_power_n_plus_two, mPtr)
+        point_add_calldata(add(state, state_folded_h_x), add(state, state_folded_h_x), add(aproof, proof_h_1_x), mPtr)
         point_mul(add(state, state_folded_h_x), add(state, state_folded_h_x), zeta_power_n_plus_two, mPtr)
-        point_add_calldata(add(state, state_folded_h_x), add(state, state_folded_h_x), add(aproof, proof_h_0_com_x), mPtr)
+        point_add_calldata(add(state, state_folded_h_x), add(state, state_folded_h_x), add(aproof, proof_h_0_x), mPtr)
       }
 
       // check that
