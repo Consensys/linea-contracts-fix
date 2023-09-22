@@ -150,7 +150,7 @@ contract PlonkVerifier {
   uint256 private constant STATE_SUCCESS = 0x1e0;
   uint256 private constant STATE_CHECK_VAR = 0x200; // /!\ this slot is used for debugging only
 
-  uint256 private constant STATE_LASTS_MEM = 0x220;
+  uint256 private constant STATE_LAST_MEM = 0x220;
 
   // -------- errors
   uint256 private constant ERROR_STRING_ID = 0x08c379a000000000000000000000000000000000000000000000000000000000; // selector for function Error(string)
@@ -160,7 +160,7 @@ contract PlonkVerifier {
 	uint256 private constant HASH_FR_BB = 340282366920938463463374607431768211456; // 2**128
 	uint256 private constant HASH_FR_ZERO_UINT256 = 0;
 
-	uint8 private constant HASH_FR_LEN_IN_BYES = 48;
+	uint8 private constant HASH_FR_LEN_IN_BYTES = 48;
 	uint8 private constant HASH_FR_SIZE_DOMAIN = 11;
 	uint8 private constant HASH_FR_ONE = 1;
 	uint8 private constant HASH_FR_TWO = 2;
@@ -172,7 +172,7 @@ contract PlonkVerifier {
     assembly {
 
       let mem := mload(0x40)
-      let freeMem := add(mem, STATE_LASTS_MEM)
+      let freeMem := add(mem, STATE_LAST_MEM)
 
       // sanity checks
       check_inputs_size(public_inputs.length, public_inputs.offset)
@@ -188,8 +188,8 @@ contract PlonkVerifier {
 
       // evaluation of Z=Xⁿ-1 at ζ, we save this value
       let zeta := mload(add(mem, STATE_ZETA))
-      let zeta_power_n_minus_HASH_FR_ONE := addmod(pow(zeta, VK_DOMAIN_SIZE, freeMem), sub(R_MOD, 1), R_MOD)
-      mstore(add(mem, STATE_ZETA_POWER_N_MINUS_ONE), zeta_power_n_minus_HASH_FR_ONE)
+      let zeta_power_n_minus_one := addmod(pow(zeta, VK_DOMAIN_SIZE, freeMem), sub(R_MOD, 1), R_MOD)
+      mstore(add(mem, STATE_ZETA_POWER_N_MINUS_ONE), zeta_power_n_minus_one)
 
       // public inputs contribution
       let l_pi := sum_pi_wo_api_commit(public_inputs.offset, public_inputs.length, freeMem)
@@ -345,7 +345,7 @@ contract PlonkVerifier {
       function derive_gamma(aproof, nb_pi, pi)->gamma_not_reduced {
         
         let state := mload(0x40)
-        let mPtr := add(state, STATE_LASTS_MEM)
+        let mPtr := add(state, STATE_LAST_MEM)
 
         // gamma
         // gamma in ascii is [0x67,0x61,0x6d, 0x6d, 0x61]
@@ -400,7 +400,7 @@ contract PlonkVerifier {
       function derive_beta(gamma_not_reduced)->beta_not_reduced{
         
         let state := mload(0x40)
-        let mPtr := add(mload(0x40), STATE_LASTS_MEM)
+        let mPtr := add(mload(0x40), STATE_LAST_MEM)
 
         // beta
         mstore(mPtr, 0x62657461) // "beta"
@@ -417,7 +417,7 @@ contract PlonkVerifier {
       function derive_alpha(aproof, beta_not_reduced)->alpha_not_reduced {
         
         let state := mload(0x40)
-        let mPtr := add(mload(0x40), STATE_LASTS_MEM)
+        let mPtr := add(mload(0x40), STATE_LAST_MEM)
 
         // alpha
         mstore(mPtr, 0x616C706861) // "alpha"
@@ -435,7 +435,7 @@ contract PlonkVerifier {
       function derive_zeta(aproof, alpha_not_reduced) {
         
         let state := mload(0x40)
-        let mPtr := add(mload(0x40), STATE_LASTS_MEM)
+        let mPtr := add(mload(0x40), STATE_LAST_MEM)
 
         // zeta
         mstore(mPtr, 0x7a657461) // "zeta"
@@ -480,7 +480,7 @@ contract PlonkVerifier {
       // * n = VK_DOMAIN_SIZE
       // * ω = VK_OMEGA (generator of the multiplicative cyclic group of order n in (ℤ/rℤ)*)
       // * ζ = z (challenge derived with Fiat Shamir)
-      // * zpnmo = 'zeta power n minus HASH_FR_ONE' (ζⁿ-1) which has been precomputed
+      // * zpnmo = 'zeta power n minus one' (ζⁿ-1) which has been precomputed
       function batch_compute_lagranges_at_z(z, zpnmo, n, mPtr) {
 
         let zn := mulmod(zpnmo, VK_IND_DOMAIN_SIZE, R_MOD) // 1/n * (ζⁿ - 1)
@@ -585,7 +585,7 @@ contract PlonkVerifier {
 
         // 0 || 48 || 0 all on 1 byte
         mstore8(add(mPtr, 0x80), 0)
-        mstore8(add(mPtr, 0x81), HASH_FR_LEN_IN_BYES)
+        mstore8(add(mPtr, 0x81), HASH_FR_LEN_IN_BYTES)
         mstore8(add(mPtr, 0x82), 0)
 
         // "BSB22-Plonk" = [42, 53, 42, 32, 32, 2d, 50, 6c, 6f, 6e, 6b,]
@@ -684,7 +684,7 @@ contract PlonkVerifier {
       // * ζ = zeta (challenge derived with Fiat Shamir)
       function compute_alpha_square_lagrange_0() {   
         let state := mload(0x40)
-        let mPtr := add(mload(0x40), STATE_LASTS_MEM)
+        let mPtr := add(mload(0x40), STATE_LAST_MEM)
 
         let res := mload(add(state, STATE_ZETA_POWER_N_MINUS_ONE))
         let den := addmod(mload(add(state, STATE_ZETA)), sub(R_MOD, 1), R_MOD)
@@ -704,7 +704,7 @@ contract PlonkVerifier {
       // * [proof_grand_product_commitment], [PROOF_OPENING_AT_ZETA_OMEGA_X], [PROOF_GRAND_PRODUCT_AT_ZETA_OMEGA]
       function batch_verify_multi_points(aproof) {
         let state := mload(0x40)
-        let mPtr := add(state, STATE_LASTS_MEM)
+        let mPtr := add(state, STATE_LAST_MEM)
 
         // here the random is not a challenge, hence no need to use Fiat Shamir, we just
         // need an unpredictible result.
@@ -789,7 +789,7 @@ contract PlonkVerifier {
       // acc_gamma stores the γⁱ
       function fold_state(aproof) {
         let state := mload(0x40)
-        let mPtr := add(mload(0x40), STATE_LASTS_MEM)
+        let mPtr := add(mload(0x40), STATE_LAST_MEM)
 
         let l_gamma_kzg := mload(add(state, STATE_GAMMA_KZG))
         let acc_gamma := l_gamma_kzg
@@ -854,7 +854,7 @@ contract PlonkVerifier {
       function compute_gamma_kzg(aproof) {
 
         let state := mload(0x40)
-        let mPtr := add(mload(0x40), STATE_LASTS_MEM)
+        let mPtr := add(mload(0x40), STATE_LAST_MEM)
         mstore(mPtr, 0x67616d6d61) // "gamma"
         mstore(add(mPtr, 0x20), mload(add(state, STATE_ZETA)))
         mstore(add(mPtr,0x40), mload(add(state, STATE_FOLDED_H_X)))
@@ -905,7 +905,7 @@ contract PlonkVerifier {
 
       function compute_commitment_linearised_polynomial_ec(aproof, s1, s2) {
         let state := mload(0x40)
-        let mPtr := add(mload(0x40), STATE_LASTS_MEM)
+        let mPtr := add(mload(0x40), STATE_LAST_MEM)
 
         mstore(mPtr, VK_QL_COM_X)
         mstore(add(mPtr, 0x20), VK_QL_COM_Y)
@@ -1036,12 +1036,12 @@ contract PlonkVerifier {
       // state + state_folded_h
       function fold_h(aproof) {
         let state := mload(0x40)
-        let n_plus_HASH_FR_TWO := add(VK_DOMAIN_SIZE, 2)
-        let mPtr := add(mload(0x40), STATE_LASTS_MEM)
-        let zeta_power_n_plus_HASH_FR_TWO := pow(mload(add(state, STATE_ZETA)), n_plus_HASH_FR_TWO, mPtr)
-        point_mul_calldata(add(state, STATE_FOLDED_H_X), add(aproof, PROOF_H_2_X), zeta_power_n_plus_HASH_FR_TWO, mPtr)
+        let n_plus_two := add(VK_DOMAIN_SIZE, 2)
+        let mPtr := add(mload(0x40), STATE_LAST_MEM)
+        let zeta_power_n_plus_two := pow(mload(add(state, STATE_ZETA)), n_plus_two, mPtr)
+        point_mul_calldata(add(state, STATE_FOLDED_H_X), add(aproof, PROOF_H_2_X), zeta_power_n_plus_two, mPtr)
         point_add_calldata(add(state, STATE_FOLDED_H_X), add(state, STATE_FOLDED_H_X), add(aproof, PROOF_H_1_X), mPtr)
-        point_mul(add(state, STATE_FOLDED_H_X), add(state, STATE_FOLDED_H_X), zeta_power_n_plus_HASH_FR_TWO, mPtr)
+        point_mul(add(state, STATE_FOLDED_H_X), add(state, STATE_FOLDED_H_X), zeta_power_n_plus_two, mPtr)
         point_add_calldata(add(state, STATE_FOLDED_H_X), add(state, STATE_FOLDED_H_X), add(aproof, PROOF_H_0_X), mPtr)
       }
 
@@ -1054,7 +1054,7 @@ contract PlonkVerifier {
         let state := mload(0x40)
 
         // (l(ζ)+β*s1(ζ)+γ)
-        let s1 := add(mload(0x40), STATE_LASTS_MEM)
+        let s1 := add(mload(0x40), STATE_LAST_MEM)
         mstore(s1, mulmod(calldataload(add(aproof, PROOF_S1_AT_ZETA)), mload(add(state, STATE_BETA)), R_MOD))
         mstore(s1, addmod(mload(s1), mload(add(state, STATE_GAMMA)), R_MOD))
         mstore(s1, addmod(mload(s1), calldataload(add(aproof, PROOF_L_AT_ZETA)), R_MOD))
