@@ -721,10 +721,12 @@ contract PlonkVerifier {
         // do an FS like challenge derivation, depending on both digests and
         // ζ to ensure that the prover cannot control the random numger.
         // Note: adding the other point ζω is not needed, as ω is known beforehand.
-        mstore(mPtr, add(state, state_folded_digests_x))
-        mstore(add(mPtr, 0x40), add(aproof, proof_grand_product_commitment_x))
-        mstore(add(mPtr, 0x80), add(state, state_zeta))
-        let random := staticcall(gas(), 0x2, mPtr, 0xa0, mPtr, 0x20)
+        mstore(mPtr, mload(add(state, state_folded_digests_x)))
+        mstore(add(mPtr, 0x20), mload(add(state, state_folded_digests_y)))
+        mstore(add(mPtr, 0x40), mload(add(aproof, proof_grand_product_commitment_x)))
+        mstore(add(mPtr, 0x60), mload(add(aproof, proof_grand_product_commitment_y)))
+        mstore(add(mPtr, 0x80), mload(add(state, state_zeta)))
+        let random := mod(staticcall(gas(), 0x2, mPtr, 0xa0, mPtr, 0x20), r_mod)
         if iszero(random){
           error_random_generation()
         }
