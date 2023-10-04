@@ -479,32 +479,32 @@ contract PlonkVerifier {
       // mPtr <- [L_0(z), .., L_{n-1}(z)]
       // 
       // Here L_i(zeta) =  ωⁱ/n * (ζⁿ-1)/(ζ-ωⁱ) where:
-      // * n = nb_public_inputs
+      // * nb_inputs = nb_public_inputs
       // * ω = vk_omega (generator of the multiplicative cyclic group of order n in (ℤ/rℤ)*)
       // * ζ = z (challenge derived with Fiat Shamir)
       // * zpnmo = 'zeta power n minus one' (ζⁿ-1) which has been precomputed
-      function batch_compute_lagranges_at_z(z, zpnmo, n, mPtr) {
+      function batch_compute_lagranges_at_z(z, zpnmo, nb_inputs, mPtr) {
 
         let zn := mulmod(zpnmo, vk_inv_domain_size, r_mod) // 1/n * (ζⁿ - 1)
         
         let _w := 1
         let _mPtr := mPtr
-        for {let i:=0} lt(i,n) {i:=add(i,1)}
+        for {let i:=0} lt(i,nb_inputs) {i:=add(i,1)}
         {
           mstore(_mPtr, addmod(z,sub(r_mod, _w), r_mod))
           _w := mulmod(_w, vk_omega, r_mod)
           _mPtr := add(_mPtr, 0x20)
         }
-        batch_invert(mPtr, n, _mPtr)
+        batch_invert(mPtr, nb_inputs, _mPtr)
         _mPtr := mPtr
         _w := 1
-        for {let i:=0} lt(i,n) {i:=add(i,1)}
+        for {let i:=0} lt(i,nb_inputs) {i:=add(i,1)}
         {
           mstore(_mPtr, mulmod(mulmod(mload(_mPtr), zn , r_mod), _w, r_mod))
           _mPtr := add(_mPtr, 0x20)
           _w := mulmod(_w, vk_omega, r_mod)
         }
-      } 
+      }  
 
       // batch invert (modulo r) in place the nb_ins uint256 inputs starting at ins.
       function batch_invert(ins, nb_ins, mPtr) {
