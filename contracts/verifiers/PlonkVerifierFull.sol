@@ -721,20 +721,20 @@ contract PlonkVerifier {
         // do an FS like challenge derivation, depending on both digests and
         // ζ to ensure that the prover cannot control the random numger.
         // Note: adding the other point ζω is not needed, as ω is known beforehand.
-        mstore(mPtr, mload(add(state, state_folded_digests_x)))
-        mstore(add(mPtr, 0x20), mload(add(state, state_folded_digests_y)))
-        mstore(add(mPtr, 0x40), mload(add(aproof, proof_batch_opening_at_zeta_x)))
-        mstore(add(mPtr, 0x80), mload(add(aproof, proof_batch_opening_at_zeta_y)))
-        mstore(add(mPtr, 0xa0), mload(add(aproof, proof_grand_product_commitment_x)))
-        mstore(add(mPtr, 0xc0), mload(add(aproof, proof_grand_product_commitment_y)))
-        mstore(add(mPtr, 0xe0), mload(add(aproof, proof_opening_at_zeta_omega_x)))
-        mstore(add(mPtr, 0x100), mload(add(aproof, proof_opening_at_zeta_omega_y)))
-        mstore(add(mPtr, 0x120), mload(add(state, state_zeta)))
-        let random := mod(staticcall(gas(), 0x2, mPtr, 0x140, mPtr, 0x20), r_mod)
+        mstore(mPtr, calldataload(add(state, state_folded_digests_x)))
+        mstore(add(mPtr, 0x20), calldataload(add(state, state_folded_digests_y)))
+        mstore(add(mPtr, 0x40), calldataload(add(aproof, proof_batch_opening_at_zeta_x)))
+        mstore(add(mPtr, 0x60), calldataload(add(aproof, proof_batch_opening_at_zeta_y)))
+        mstore(add(mPtr, 0x80), calldataload(add(aproof, proof_grand_product_commitment_x)))
+        mstore(add(mPtr, 0xa0), calldataload(add(aproof, proof_grand_product_commitment_y)))
+        mstore(add(mPtr, 0xc0), calldataload(add(aproof, proof_opening_at_zeta_omega_x)))
+        mstore(add(mPtr, 0xe0), calldataload(add(aproof, proof_opening_at_zeta_omega_y)))
+        mstore(add(mPtr, 0x100), calldataload(add(state, state_zeta)))
+        let random := staticcall(gas(), 0x2, mPtr, 0x120, mPtr, 0x20)
         if iszero(random){
           error_random_generation()
         }
-        random := mload(mPtr) // use the same variable as we are one variable away from getting stack-too-deep error...
+        random := mod(mload(mPtr), r_mod) // use the same variable as we are one variable away from getting stack-too-deep error...
 
         let folded_quotients := mPtr
         mPtr := add(folded_quotients, 0x40)
