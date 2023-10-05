@@ -730,7 +730,8 @@ contract PlonkVerifier {
         mstore(add(mPtr, 0xc0), calldataload(add(aproof, proof_opening_at_zeta_omega_x)))
         mstore(add(mPtr, 0xe0), calldataload(add(aproof, proof_opening_at_zeta_omega_y)))
         mstore(add(mPtr, 0x100), calldataload(add(state, state_zeta)))
-        let random := staticcall(gas(), 0x2, mPtr, 0x120, mPtr, 0x20)
+        mstore(add(mPtr, 0x120), mload(add(state, state_gamma_kzg)))
+        let random := staticcall(gas(), 0x2, mPtr, 0x140, mPtr, 0x20)
         if iszero(random){
           error_random_generation()
         }
