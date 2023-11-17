@@ -18,8 +18,8 @@
 
 pragma solidity ^0.8.19;
 
-contract PlonkVerifier {
-
+/// @custom:security-contact security-report@linea.build
+contract PlonkVerifierFullLarge {
   uint256 private constant r_mod = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
   uint256 private constant p_mod = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
   
