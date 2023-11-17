@@ -61,7 +61,7 @@ abstract contract MessageServiceBase is Initializable {
    * @notice Initializes the message service
    * @dev Must be initialized in the initialize function of the main contract or constructor
    * @param _messageService The message service address, cannot be empty.
-   **/
+   */
   function __MessageServiceBase_init(address _messageService) internal onlyInitializing {
     if (_messageService == address(0)) {
       revert ZeroAddressNotAllowed();
@@ -73,7 +73,7 @@ abstract contract MessageServiceBase is Initializable {
   /**
    * @notice Sets the remote sender
    * @param _remoteSender The authorized remote sender address, cannot be empty.
-   **/
+   */
   function _setRemoteSender(address _remoteSender) internal {
     if (_remoteSender == address(0)) {
       revert ZeroAddressNotAllowed();

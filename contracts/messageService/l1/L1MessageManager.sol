@@ -15,8 +15,6 @@ abstract contract L1MessageManager is IL1MessageManager {
   uint8 public constant OUTBOX_STATUS_SENT = 1;
   uint8 public constant OUTBOX_STATUS_RECEIVED = 2;
 
-  /// @dev There is a uint216 worth of storage layout here.
-
   /// @dev Mapping to store L1->L2 message hashes status.
   /// @dev messageHash => messageStatus (0: unknown, 1: sent, 2: received).
   mapping(bytes32 => uint256) public outboxL1L2MessageStatus;

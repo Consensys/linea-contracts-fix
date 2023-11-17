@@ -227,7 +227,7 @@ library RLPReader {
     _copy(memPtr, destPtr, len);
   }
 
-  /*
+  /**
    * Private Helpers
    */
 
