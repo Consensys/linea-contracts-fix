@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -32,7 +32,7 @@ abstract contract L1MessageService is
   // Keep free storage slots for future implementation updates to avoid storage collision.
   uint256[50] private __gap;
 
-  // @dev adding these should not affect storage as they are constants and are store in bytecode
+  // @dev adding these should not affect storage as they are constants and are stored in bytecode.
   uint256 private constant REFUND_OVERHEAD_IN_GAS = 42000;
 
   /**
@@ -42,7 +42,7 @@ abstract contract L1MessageService is
    * @param _pauseManagerAddress The address owning the pause management role.
    * @param _rateLimitPeriod The period to rate limit against.
    * @param _rateLimitAmount The limit allowed for withdrawing the period.
-   **/
+   */
   function __MessageService_init(
     address _limitManagerAddress,
     address _pauseManagerAddress,
@@ -76,7 +76,7 @@ abstract contract L1MessageService is
    * @param _to The address the message is intended for.
    * @param _fee The fee being paid for the message delivery.
    * @param _calldata The calldata to pass to the recipient.
-   **/
+   */
   function sendMessage(
     address _to,
     uint256 _fee,
@@ -115,7 +115,7 @@ abstract contract L1MessageService is
    * @param _feeRecipient The recipient for the fee.
    * @param _calldata The calldata to pass to the recipient.
    * @param _nonce The unique auto generated nonce used when sending the message.
-   **/
+   */
   function claimMessage(
     address _from,
     address _to,
@@ -157,14 +157,14 @@ abstract contract L1MessageService is
   /**
    * @notice Claims and delivers a cross-chain message.
    * @dev _messageSender is set temporarily when claiming.
-   **/
+   */
   function sender() external view returns (address) {
     return _messageSender;
   }
 
   /**
    * @notice Function to receive funds for liquidity purposes.
-   **/
+   */
   receive() external payable virtual {}
 
   /**
@@ -172,7 +172,7 @@ abstract contract L1MessageService is
    * @param _feeInWei The fee paid for delivery in Wei.
    * @param _to The recipient of the message and gas refund.
    * @param _calldata The calldata of the message.
-   **/
+   */
   modifier distributeFees(
     uint256 _feeInWei,
     address _to,

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0
 
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -49,7 +49,7 @@ abstract contract PauseManager is Initializable, IPauseManager, AccessControlUpg
 
   /**
    * @dev Throws if the type is not paused.
-   * @param _pauseType The keccak256 pause type being checked,
+   * @param _pauseType The keccak256 pause type being checked.
    */
   function _requireTypePaused(bytes32 _pauseType) internal view virtual {
     if (!pauseTypeStatuses[_pauseType]) {
@@ -59,7 +59,7 @@ abstract contract PauseManager is Initializable, IPauseManager, AccessControlUpg
 
   /**
    * @dev Throws if the type is paused.
-   * @param _pauseType The keccak256 pause type being checked,
+   * @param _pauseType The keccak256 pause type being checked.
    */
   function _requireTypeNotPaused(bytes32 _pauseType) internal view virtual {
     if (pauseTypeStatuses[_pauseType]) {
@@ -71,7 +71,7 @@ abstract contract PauseManager is Initializable, IPauseManager, AccessControlUpg
    * @notice Pauses functionality by specific type.
    * @dev Requires PAUSE_MANAGER_ROLE.
    * @param _pauseType keccak256 pause type.
-   **/
+   */
   function pauseByType(bytes32 _pauseType) external whenTypeNotPaused(_pauseType) onlyRole(PAUSE_MANAGER_ROLE) {
     pauseTypeStatuses[_pauseType] = true;
     emit Paused(_msgSender(), _pauseType);
@@ -81,7 +81,7 @@ abstract contract PauseManager is Initializable, IPauseManager, AccessControlUpg
    * @notice Unpauses functionality by specific type.
    * @dev Requires PAUSE_MANAGER_ROLE.
    * @param _pauseType keccak256 pause type.
-   **/
+   */
   function unPauseByType(bytes32 _pauseType) external whenTypePaused(_pauseType) onlyRole(PAUSE_MANAGER_ROLE) {
     pauseTypeStatuses[_pauseType] = false;
     emit UnPaused(_msgSender(), _pauseType);

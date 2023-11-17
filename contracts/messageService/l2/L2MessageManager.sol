@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { IL2MessageManager } from "../../interfaces/IL2MessageManager.sol";
@@ -35,7 +35,7 @@ abstract contract L2MessageManager is Initializable, PauseManager, IL2MessageMan
   /**
    * @notice Initialises L2 message manager contract.
    * @param _l1l2MessageSetter The address owning the L1_L2_MESSAGE_SETTER_ROLE role.
-   **/
+   */
   function __L2MessageManager_init(address _l1l2MessageSetter) internal onlyInitializing {
     _grantRole(L1_L2_MESSAGE_SETTER_ROLE, _l1l2MessageSetter);
   }
@@ -66,7 +66,7 @@ abstract contract L2MessageManager is Initializable, PauseManager, IL2MessageMan
   }
 
   /**
-   * @notice Update the status of L1->L2 message when a user claim a message on L2.
+   * @notice Update the status of L1->L2 message when a user claims  a message on L2.
    * @param _messageHash Hash of the message.
    */
   function _updateL1L2MessageStatusToClaimed(bytes32 _messageHash) internal {
