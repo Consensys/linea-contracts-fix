@@ -1,4 +1,6 @@
-import { deployFromFactory, requireEnv } from "../hardhat/utils";
+import { run } from "hardhat";
+import { delay } from "../../utils/storeAddress";
+import { deployFromFactory } from "../hardhat/utils";
 
 /*
     *******************************************************************************************
@@ -11,11 +13,24 @@ import { deployFromFactory, requireEnv } from "../hardhat/utils";
 */
 
 async function main() {
-  const verifierContractName = requireEnv("VERIFIER_CONTRACT_NAME");
+  // const verifierFull = await deployFromFactory("PlonkVerifierFull");
+  // console.log(`PlonkVerifierFull deployed at ${verifierFull.address}`);
 
-  // PLONK VERIFIER
-  const verifier = await deployFromFactory(verifierContractName);
-  console.log(`${verifierContractName} deployed at ${verifier.address}`);
+  // await delay(30000);
+
+  // await run("verify", {
+  //   address: verifierFull.address,
+  // });
+
+
+  const verifierFullLarge = await deployFromFactory("PlonkVerifierFullLarge");
+  console.log(`PlonkVerifierFullLarge deployed at ${verifierFullLarge.address}`);
+
+  await delay(30000);
+
+  await run("verify", {
+    address: verifierFullLarge.address,
+  });
 }
 
 main()
