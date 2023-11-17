@@ -235,6 +235,17 @@ describe("L1MessageService", () => {
 
   describe("Claiming messages", () => {
     it("Should fail when the message hash does not exist", async () => {
+      const expectedBytes = await encodeSendMessage(
+        l1MessageService.address,
+        notAuthorizedAccount.address,
+        MESSAGE_FEE,
+        MESSAGE_VALUE_1ETH,
+        BigNumber.from(1),
+        "0x",
+      );
+
+      const messageHash = ethers.utils.keccak256(expectedBytes);
+
       await expect(
         l1MessageService.claimMessage(
           l1MessageService.address,
@@ -245,7 +256,7 @@ describe("L1MessageService", () => {
           "0x",
           1,
         ),
-      ).to.be.revertedWithCustomError(l1MessageService, "MessageDoesNotExistOrHasAlreadyBeenClaimed");
+      ).to.be.revertedWithCustomError(l1MessageService, "MessageDoesNotExistOrHasAlreadyBeenClaimed").withArgs(messageHash);
     });
 
     it("Should execute the claim message and send fees to recipient, left over fee to destination", async () => {
@@ -338,6 +349,8 @@ describe("L1MessageService", () => {
         "0x",
       );
 
+      const messageHash = ethers.utils.keccak256(expectedBytes);
+
       await l1MessageService.addFunds({ value: INITIAL_WITHDRAW_LIMIT });
       await l1MessageService.addL2L1MessageHash(ethers.utils.keccak256(expectedBytes));
 
@@ -360,7 +373,7 @@ describe("L1MessageService", () => {
           "0x",
           1,
         ),
-      ).to.be.revertedWithCustomError(l1MessageService, "MessageDoesNotExistOrHasAlreadyBeenClaimed");
+      ).to.be.revertedWithCustomError(l1MessageService, "MessageDoesNotExistOrHasAlreadyBeenClaimed").withArgs(messageHash);
     });
 
     it("Should execute the claim message and send the fees to msg.sender, left over fee to destination", async () => {
