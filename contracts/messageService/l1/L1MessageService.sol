@@ -13,6 +13,7 @@ import { L1MessageManager } from "./L1MessageManager.sol";
 /**
  * @title Contract to manage cross-chain messaging on L1.
  * @author ConsenSys Software Inc.
+ * @custom:security-contact security-report@linea.build
  */
 abstract contract L1MessageService is
   Initializable,

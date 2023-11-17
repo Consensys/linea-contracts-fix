@@ -9,6 +9,7 @@ import { IRateLimiter } from "../../interfaces/IRateLimiter.sol";
  * @title Rate Limiter by period and amount using the block timestamp.
  * @author ConsenSys Software Inc.
  * @notice You can use this control numeric limits over a period using timestamp.
+ * @custom:security-contact security-report@linea.build
  */
 contract RateLimiter is Initializable, IRateLimiter, AccessControlUpgradeable {
   bytes32 public constant RATE_LIMIT_SETTER_ROLE = keccak256("RATE_LIMIT_SETTER_ROLE");

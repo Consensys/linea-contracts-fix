@@ -7,6 +7,7 @@ import { ZkEvmV2 } from "./ZkEvmV2.sol";
  * @title Contract to reinitialize cross-chain messaging on L1 and rollup proving.
  * @author ConsenSys Software Inc.
  * @dev Init indicates it is an initializer contract
+ * @custom:security-contact security-report@linea.build
  */
 contract ZkEvmV2Init is ZkEvmV2 {
   /**

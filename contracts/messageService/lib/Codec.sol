@@ -5,6 +5,7 @@ pragma solidity 0.8.19;
  * @title Decoding functions for message service anchoring and bytes slicing.
  * @author ConsenSys Software Inc.
  * @notice You can use this to slice bytes and extract anchoring hashes from calldata.
+ * @custom:security-contact security-report@linea.build
  */
 library CodecV2 {
   /**

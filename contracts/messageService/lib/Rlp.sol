@@ -11,6 +11,7 @@ error WrongBytesLength();
 error NoNext();
 error MemoryOutOfBounds(uint256 inde);
 
+/// @custom:security-contact security-report@linea.build
 library RLPReader {
   uint8 internal constant STRING_SHORT_START = 0x80;
   uint8 internal constant STRING_LONG_START = 0xb8;

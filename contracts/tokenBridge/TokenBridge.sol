@@ -20,6 +20,7 @@ import { MessageServiceBase } from "../messageService/MessageServiceBase.sol";
  * @title Linea Canonical Token Bridge
  * @notice Contract to manage cross-chain ERC20 bridging.
  * @author ConsenSys Software Inc.
+ * @custom:security-contact security-report@linea.build
  */
 contract TokenBridge is
   ITokenBridge,

@@ -9,6 +9,7 @@ import { IPauseManager } from "../../interfaces/IPauseManager.sol";
 /**
  * @title Contract to manage cross-chain function pausing.
  * @author ConsenSys Software Inc.
+ * @custom:security-contact security-report@linea.build
  */
 abstract contract PauseManager is Initializable, IPauseManager, AccessControlUpgradeable {
   bytes32 public constant PAUSE_MANAGER_ROLE = keccak256("PAUSE_MANAGER_ROLE");

@@ -20,6 +20,7 @@ error UnknownTransactionType();
 /**
  * @title Contract to decode RLP formatted transactions.
  * @author ConsenSys Software Inc.
+ * @custom:security-contact security-report@linea.build
  */
 library TransactionDecoder {
   /**
