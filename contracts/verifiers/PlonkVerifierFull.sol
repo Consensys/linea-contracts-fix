@@ -59,6 +59,7 @@ contract PlonkVerifier {
   
   uint256 private constant vk_coset_shift = 5;
   
+
   uint256 private constant vk_qc_0_x = 2614573220337297659179308133300379021102641010525403337401619021428140031269;
   uint256 private constant vk_qc_0_y = 5896590631125620550976365652082599923038691774487942725877415439318691171350;
   
@@ -279,19 +280,20 @@ contract PlonkVerifier {
 
       function check_proof_size(actual_proof_size) {
         let expected_proof_size := add(0x340, mul(vk_nb_custom_gates,0x60))
-        let expected_proof_size := add(0x340, mul(vk_nb_commitments_commit_api,0x60))
         if iszero(eq(actual_proof_size, expected_proof_size)) {
          error_proof_size() 
         }
       }
     
       function check_proof_openings_size(aproof) {
-  
+
         let openings_check := 1
       
         // linearised polynomial at zeta
         let p := add(aproof, proof_linearised_polynomial_at_zeta)
-        openings_check := and(openings_check, lt(calldataload(p), r_mod))
+        if iszero(lt(calldataload(p), r_mod)){
+          error_proof_openings_size()
+        }
 
         // quotient polynomial at zeta
         p := add(aproof, proof_quotient_polynomial_at_zeta)
@@ -299,15 +301,21 @@ contract PlonkVerifier {
         
         // proof_l_at_zeta
         p := add(aproof, proof_l_at_zeta)
-        openings_check := and(openings_check, lt(calldataload(p), r_mod))
+        if iszero(lt(calldataload(p), r_mod)) {
+          error_proof_openings_size()
+        }
 
         // proof_r_at_zeta
         p := add(aproof, proof_r_at_zeta)
-        openings_check := and(openings_check, lt(calldataload(p), r_mod))
+        if iszero(lt(calldataload(p), r_mod)) {
+          error_proof_openings_size()
+        }
 
         // proof_o_at_zeta
         p := add(aproof, proof_o_at_zeta)
-        openings_check := and(openings_check, lt(calldataload(p), r_mod))
+        if iszero(lt(calldataload(p), r_mod)) {
+          error_proof_openings_size()
+        }
 
         // proof_s1_at_zeta
         p := add(aproof, proof_s1_at_zeta)
@@ -315,11 +323,16 @@ contract PlonkVerifier {
         
         // proof_s2_at_zeta
         p := add(aproof, proof_s2_at_zeta)
-        openings_check := and(openings_check, lt(calldataload(p), r_mod))
+        if iszero(lt(calldataload(p), r_mod)) {
+          error_proof_openings_size()
+        }
 
         // proof_grand_product_at_zeta_omega
         p := add(aproof, proof_grand_product_at_zeta_omega)
-        openings_check := and(openings_check, lt(calldataload(p), r_mod))
+        if iszero(lt(calldataload(p), r_mod)) {
+          error_proof_openings_size()
+        }
+
 
         // proof_openings_qci_at_zeta        
         p := add(aproof, proof_openings_qci_at_zeta)
@@ -690,13 +703,7 @@ contract PlonkVerifier {
         // we interpret it as a big integer mod r in big endian (similar to regular decimal notation)
         // the result is then 2**(8*16)*mPtr[:32] + mPtr[32:48]
         res := mulmod(mload(mPtr), bb, r_mod) // <- res = 2**128 * mPtr[:32]
-        offset := add(mPtr, 0x10)
-        for {let i:=0} lt(i, 0x10) {i:=add(i,1)} // mPtr <- [xx, xx, ..,  | 0, 0, .. 0  ||    b2   ]
-        {
-          mstore8(offset, 0x00)
-          offset := add(offset, 0x1)
-        }
-        let b1 := mload(add(mPtr, 0x10)) // b1 <- [0, 0, .., 0 ||  b2[:16] ]
+        let b1 := shr(128, mload(add(mPtr, 0x20))) // b1 <- [0, 0, .., 0 ||  b2[:16] ]
         res := addmod(res, b1, r_mod)
 
       }
@@ -870,7 +877,7 @@ contract PlonkVerifier {
         mstore(mPtr, vk_s2_com_x)
         mstore(mPtr20, vk_s2_com_y)
         point_acc_mul(state_folded_digests, mPtr, acc_gamma, mPtr40)
-        fr_acc_mul_calldata(add(state, state_folded_claimed_values), add(aproof, proof_s2_at_zeta), acc_gamma)
+        fr_acc_mul_calldata(add(state, state_folded_claimed_values), add(aproof, proof_s2_at_zeta), acc_gamma)  
         let poscaz := add(aproof, proof_openings_qci_at_zeta)
         
         acc_gamma := mulmod(acc_gamma, l_gamma_kzg, r_mod)
@@ -919,7 +926,6 @@ contract PlonkVerifier {
         mstore(add(mPtr,add(offset, 0x20)), vk_qc_0_y)
         offset := add(offset, 0x40)
         
-
         mstore(add(mPtr, offset), calldataload(add(aproof, proof_quotient_polynomial_at_zeta)))
         mstore(add(mPtr, add(offset, 0x20)), calldataload(add(aproof, proof_linearised_polynomial_at_zeta)))
         mstore(add(mPtr, add(offset, 0x40)), calldataload(add(aproof, proof_l_at_zeta)))
