@@ -58,7 +58,6 @@ contract PlonkVerifier {
   uint256 private constant vk_s3_com_y = 3950283788807144685755254392627057902299881176666195233354776073965155557919;
   
   uint256 private constant vk_coset_shift = 5;
-  
 
   uint256 private constant vk_qc_0_x = 2614573220337297659179308133300379021102641010525403337401619021428140031269;
   uint256 private constant vk_qc_0_y = 5896590631125620550976365652082599923038691774487942725877415439318691171350;
@@ -267,14 +266,12 @@ contract PlonkVerifier {
     
       // s number of public inputs, p pointer the public inputs
       function check_inputs_size(s, p) {
-        let input_checks := 1
         for {let i} lt(i, s) {i:=add(i,1)}
         {
-          input_checks := and(input_checks,lt(calldataload(p), r_mod))
+          if iszero(lt(calldataload(p), r_mod)){
+            error_inputs_size()
+          }
           p := add(p, 0x20)
-        }
-        if iszero(input_checks) {
-          error_inputs_size()
         }
       }
 
@@ -286,8 +283,6 @@ contract PlonkVerifier {
       }
     
       function check_proof_openings_size(aproof) {
-
-        let openings_check := 1
       
         // linearised polynomial at zeta
         let p := add(aproof, proof_linearised_polynomial_at_zeta)
@@ -297,7 +292,9 @@ contract PlonkVerifier {
 
         // quotient polynomial at zeta
         p := add(aproof, proof_quotient_polynomial_at_zeta)
-        openings_check := and(openings_check, lt(calldataload(p), r_mod))
+        if iszero(lt(calldataload(p), r_mod)) {
+          error_proof_openings_size()
+        }
         
         // proof_l_at_zeta
         p := add(aproof, proof_l_at_zeta)
@@ -319,7 +316,9 @@ contract PlonkVerifier {
 
         // proof_s1_at_zeta
         p := add(aproof, proof_s1_at_zeta)
-        openings_check := and(openings_check, lt(calldataload(p), r_mod))
+        if iszero(lt(calldataload(p), r_mod)) {
+            error_proof_openings_size()
+        }
         
         // proof_s2_at_zeta
         p := add(aproof, proof_s2_at_zeta)
@@ -333,20 +332,15 @@ contract PlonkVerifier {
           error_proof_openings_size()
         }
 
-
-        // proof_openings_qci_at_zeta        
-        p := add(aproof, proof_openings_qci_at_zeta)
-        for {let i:=0} lt(i, vk_nb_custom_gates) {i:=add(i,1)}
-
+        // proof_openings_selector_commit_api_at_zeta
+        p := add(aproof, proof_openings_selector_commit_api_at_zeta)
+        for {let i:=0} lt(i, vk_nb_commitments_commit_api) {i:=add(i,1)}
         {
-          openings_check := and(openings_check, lt(calldataload(p), r_mod))
+          if iszero(lt(calldataload(p), r_mod)) {
+            error_proof_openings_size()
+          }
           p := add(p, 0x20)
         }
-      
-        if iszero(openings_check) {
-          error_proof_openings_size()
-        }
-
       }
       // end checks -------------------------------------------------
 
@@ -936,6 +930,7 @@ contract PlonkVerifier {
 
         
         let _mPtr := add(mPtr, add(offset, 0xe0))
+
         let _poscaz := add(aproof, proof_openings_qci_at_zeta)
         for {let i:=0} lt(i, vk_nb_custom_gates) {i:=add(i,1)}
         {
