@@ -31,7 +31,6 @@ interface ITokenBridge {
   error ZeroAmountNotAllowed(uint256 amount);
   error NotReserved(address token);
   error TokenNotDeployed(address token);
-  error TokenNativeOnOtherLayer(address token);
   error AlreadyBrigedToNativeTokenSet(address token);
   error StatusAddressNotAllowed(address token);
 

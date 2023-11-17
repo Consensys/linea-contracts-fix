@@ -4,13 +4,14 @@
  * @author Hamdi Allam hamdi.allam97@gmail.com
  * @notice Please reach out with any questions or concerns.
  */
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 error NotList();
 error WrongBytesLength();
 error NoNext();
 error MemoryOutOfBounds(uint256 inde);
 
+/// @custom:security-contact security-report@linea.build
 library RLPReader {
   uint8 internal constant STRING_SHORT_START = 0x80;
   uint8 internal constant STRING_LONG_START = 0xb8;
@@ -227,7 +228,7 @@ library RLPReader {
     _copy(memPtr, destPtr, len);
   }
 
-  /*
+  /**
    * Private Helpers
    */
 
