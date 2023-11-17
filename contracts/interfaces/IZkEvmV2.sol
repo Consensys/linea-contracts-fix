@@ -40,7 +40,7 @@ interface IZkEvmV2 {
   /**
    * @dev Thrown when l2 block timestamp is not correct
    */
-  error BlockTimestampError();
+  error BlockTimestampError(uint256 l2BlockTimestamp, uint256 currentBlockTimestamp);
 
   /**
    * @dev Thrown when the starting rootHash does not match the existing state

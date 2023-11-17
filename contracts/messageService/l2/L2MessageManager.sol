@@ -69,7 +69,7 @@ abstract contract L2MessageManager is Initializable, PauseManager, IL2MessageMan
    */
   function _updateL1L2MessageStatusToClaimed(bytes32 _messageHash) internal {
     if (inboxL1L2MessageStatus[_messageHash] != INBOX_STATUS_RECEIVED) {
-      revert MessageDoesNotExistOrHasAlreadyBeenClaimed();
+      revert MessageDoesNotExistOrHasAlreadyBeenClaimed(_messageHash);
     }
 
     inboxL1L2MessageStatus[_messageHash] = INBOX_STATUS_CLAIMED;

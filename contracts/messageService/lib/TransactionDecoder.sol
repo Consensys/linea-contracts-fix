@@ -15,7 +15,7 @@ error TransactionShort();
 /**
  * dev Thrown when the transaction type is unknown.
  */
-error UnknownTransactionType();
+error UnknownTransactionType(bytes1 versionByte);
 
 /**
  * @title Contract to decode RLP formatted transactions.
@@ -47,7 +47,7 @@ library TransactionDecoder {
       return _decodeLegacyTransaction(_transaction);
     }
 
-    revert UnknownTransactionType();
+    revert UnknownTransactionType(version);
   }
 
   /**

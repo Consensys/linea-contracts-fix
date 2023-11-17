@@ -54,7 +54,7 @@ abstract contract L1MessageManager is IL1MessageManager {
    */
   function _updateL2L1MessageStatusToClaimed(bytes32 _messageHash) internal {
     if (inboxL2L1MessageStatus[_messageHash] != INBOX_STATUS_RECEIVED) {
-      revert MessageDoesNotExistOrHasAlreadyBeenClaimed();
+      revert MessageDoesNotExistOrHasAlreadyBeenClaimed(_messageHash);
     }
 
     delete inboxL2L1MessageStatus[_messageHash];
