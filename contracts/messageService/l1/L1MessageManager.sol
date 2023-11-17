@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 import { IL1MessageManager } from "../../interfaces/IL1MessageManager.sol";
 
 /**
  * @title Contract to manage cross-chain message hashes storage and status on L1.
  * @author ConsenSys Software Inc.
+ * @custom:security-contact security-report@linea.build
  */
 abstract contract L1MessageManager is IL1MessageManager {
   uint8 public constant INBOX_STATUS_UNKNOWN = 0;
