@@ -15,8 +15,6 @@ abstract contract L2MessageManager is Initializable, PauseManager, IL2MessageMan
   uint8 public constant INBOX_STATUS_RECEIVED = 1;
   uint8 public constant INBOX_STATUS_CLAIMED = 2;
 
-  /// @dev There is a uint232 worth of storage layout here
-
   bytes32 public constant L1_L2_MESSAGE_SETTER_ROLE = keccak256("L1_L2_MESSAGE_SETTER_ROLE");
 
   /**

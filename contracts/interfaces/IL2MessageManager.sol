@@ -18,7 +18,7 @@ interface IL2MessageManager {
   error EmptyMessageHashesArray();
 
   /**
-   * @dev Thrown when the message does not exist or has already been claimed.
+   * @dev Thrown when the message does not exist or has already been claimed or does not exist.
    */
   error MessageDoesNotExistOrHasAlreadyBeenClaimed();
 

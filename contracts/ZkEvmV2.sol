@@ -134,7 +134,8 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
   }
 
   /**
-   * @notice Finalizes blocks with or without using a proof depending on _shouldProve
+   * @notice Finalizes blocks using a proof.
+   * @dev OPERATOR_ROLE is required to execute.
    * @dev If the verifier based on proof type is not found, it reverts.
    * @param _blocksData The full BlockData collection - block, transaction and log data.
    * @param _proof The proof to be verified with the proof type verifier contract.

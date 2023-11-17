@@ -88,16 +88,16 @@ interface IZkEvmV2 {
   function finalizeBlocksWithoutProof(BlockData[] calldata _calldata) external;
 
   /**
-   * @notice Finalizes blocks without using a proof
-   * @dev OPERATOR_ROLE is required to execute
-   * @dev If the verifier based on proof type is not found, it defaults to the default verifier type
-   * @param _calldata The full BlockData collection - block, transaction and log data
-   * @param _proof The proof to verified with the proof type verifier contract
-   * @param _proofType The proof type to determine which verifier contract to use
-   * @param _parentStateRootHash The beginning roothash to start with
-   */
+   * @notice Finalizes blocks using a proof.
+   * @dev OPERATOR_ROLE is required to execute.
+   * @dev If the verifier based on proof type is not found, it reverts.
+   * @param _blocksData The full BlockData collection - block, transaction and log data.
+   * @param _proof The proof to be verified with the proof type verifier contract.
+   * @param _proofType The proof type to determine which verifier contract to use.
+   * @param _parentStateRootHash The starting roothash for the last known block.
+   **/
   function finalizeBlocks(
-    BlockData[] calldata _calldata,
+    BlockData[] calldata _blocksData,
     bytes calldata _proof,
     uint256 _proofType,
     bytes32 _parentStateRootHash
