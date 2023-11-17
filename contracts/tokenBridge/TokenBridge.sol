@@ -20,6 +20,7 @@ import { MessageServiceBase } from "../messageService/MessageServiceBase.sol";
  * @title Linea Canonical Token Bridge
  * @notice Contract to manage cross-chain ERC20 bridging.
  * @author ConsenSys Software Inc.
+ * @custom:security-contact security-report@linea.build
  */
 contract TokenBridge is
   ITokenBridge,
@@ -34,9 +35,9 @@ contract TokenBridge is
   bytes4 internal constant _PERMIT_SELECTOR = IERC20PermitUpgradeable.permit.selector;
 
   /// @notice used for the token metadata
-  bytes private constant metadataName = abi.encodeCall(IERC20MetadataUpgradeable.name, ());
-  bytes private constant metadataSymbol = abi.encodeCall(IERC20MetadataUpgradeable.symbol, ());
-  bytes private constant metadataDecimals = abi.encodeCall(IERC20MetadataUpgradeable.decimals, ());
+  bytes private constant METADATA_NAME = abi.encodeCall(IERC20MetadataUpgradeable.name, ());
+  bytes private constant METADATA_SYMBOL = abi.encodeCall(IERC20MetadataUpgradeable.symbol, ());
+  bytes private constant METADATA_DECIMALS = abi.encodeCall(IERC20MetadataUpgradeable.decimals, ());
 
   address public tokenBeacon;
   /// @notice mapping (chainId => nativeTokenAddress => brigedTokenAddress)
@@ -201,6 +202,8 @@ contract TokenBridge is
   /**
    * @notice Similar to `bridgeToken` function but allows to pass additional
    *   permit data to do the ERC20 approval in a single transaction.
+   * @notice _permit can fail silently, don't rely on this function passing as a form
+   *   of authentication
    * @param _token The address of the token to be bridged.
    * @param _amount The amount of the token to be bridged.
    * @param _recipient The address that will receive the tokens on the other chain.
@@ -326,14 +329,15 @@ contract TokenBridge is
    *   Contracts are deployed using CREATE2 so deployment address is deterministic.
    * @param _nativeToken The address of the native token on the source chain.
    * @param _tokenMetadata The encoded metadata for the token.
+   * @param _chainId The chain id on which the token will be deployed, used to calculate the salt
    * @return The address of the newly deployed BridgedToken contract.
    */
   function deployBridgedToken(
     address _nativeToken,
     bytes calldata _tokenMetadata,
-    uint256 chainId
+    uint256 _chainId
   ) internal returns (address) {
-    bytes32 _salt = keccak256(abi.encode(chainId, _nativeToken));
+    bytes32 _salt = keccak256(abi.encode(_chainId, _nativeToken));
     BeaconProxy bridgedToken = new BeaconProxy{ salt: _salt }(tokenBeacon, "");
     address bridgedTokenAddress = address(bridgedToken);
 
@@ -346,7 +350,7 @@ contract TokenBridge is
   /**
    * @dev Linea can reserve tokens. In this case, the token cannot be bridged.
    *   Linea can only reserve tokens that have not been bridged before.
-   * @notice Make sure that you that _token is native to the current chain
+   * @notice Make sure that _token is native to the current chain
    *   where you are calling this function from
    * @param _token The address of the token to be set as reserved.
    */
@@ -408,7 +412,7 @@ contract TokenBridge is
    * @param _token The address of the ERC-20 token contract
    */
   function _safeName(address _token) internal view returns (string memory) {
-    (bool success, bytes memory data) = _token.staticcall(metadataName);
+    (bool success, bytes memory data) = _token.staticcall(METADATA_NAME);
     return success ? _returnDataToString(data) : "NO_NAME";
   }
 
@@ -417,7 +421,7 @@ contract TokenBridge is
    * @param _token The address of the ERC-20 token contract
    */
   function _safeSymbol(address _token) internal view returns (string memory) {
-    (bool success, bytes memory data) = _token.staticcall(metadataSymbol);
+    (bool success, bytes memory data) = _token.staticcall(METADATA_SYMBOL);
     return success ? _returnDataToString(data) : "NO_SYMBOL";
   }
 
@@ -427,7 +431,7 @@ contract TokenBridge is
    * @param _token The address of the ERC-20 token contract
    */
   function _safeDecimals(address _token) internal view returns (uint8) {
-    (bool success, bytes memory data) = _token.staticcall(metadataDecimals);
+    (bool success, bytes memory data) = _token.staticcall(METADATA_DECIMALS);
     return success && data.length == 32 ? abi.decode(data, (uint8)) : 18;
   }
 
@@ -467,6 +471,7 @@ contract TokenBridge is
 
   /**
    * @notice Call the token permit method of extended ERC20
+   * @notice Only support tokens implementing ERC-2612
    * @param _token ERC20 token address
    * @param _permitData Raw data of the call `permit` of the token
    */
