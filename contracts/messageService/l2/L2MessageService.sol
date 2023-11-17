@@ -39,6 +39,8 @@ contract L2MessageService is
   // @dev adding these should not affect storage as they are constants and are store in bytecode
   uint256 private constant REFUND_OVERHEAD_IN_GAS = 47500;
 
+  address private constant DEFAULT_SENDER_ADDRESS = address(123456789);
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
@@ -78,7 +80,7 @@ contract L2MessageService is
     _grantRole(RATE_LIMIT_SETTER_ROLE, _securityCouncil);
     _grantRole(PAUSE_MANAGER_ROLE, _securityCouncil);
 
-    _messageSender = address(123456789);
+    _messageSender = DEFAULT_SENDER_ADDRESS;
   }
 
   /**
@@ -173,7 +175,7 @@ contract L2MessageService is
       }
     }
 
-    _messageSender = address(123456789);
+    _messageSender = DEFAULT_SENDER_ADDRESS;
     emit MessageClaimed(messageHash);
   }
 

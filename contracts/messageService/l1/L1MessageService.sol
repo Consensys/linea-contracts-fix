@@ -35,6 +35,8 @@ abstract contract L1MessageService is
   // @dev adding these should not affect storage as they are constants and are stored in bytecode.
   uint256 private constant REFUND_OVERHEAD_IN_GAS = 42000;
 
+  address private constant DEFAULT_SENDER_ADDRESS = address(123456789);
+
   /**
    * @notice Initialises underlying message service dependencies.
    * @dev _messageSender is initialised to a non-zero value for gas efficiency on claiming.
@@ -66,7 +68,7 @@ abstract contract L1MessageService is
     _grantRole(PAUSE_MANAGER_ROLE, _pauseManagerAddress);
 
     nextMessageNumber = 1;
-    _messageSender = address(123456789);
+    _messageSender = DEFAULT_SENDER_ADDRESS;
   }
 
   /**
@@ -107,7 +109,7 @@ abstract contract L1MessageService is
    * @notice Claims and delivers a cross-chain message.
    * @dev _feeRecipient can be set to address(0) to receive as msg.sender.
    * @dev _messageSender is set temporarily when claiming and reset post. Used in sender().
-   * @dev _messageSender is reset to address(123456789) to be more gas efficient.
+   * @dev _messageSender is reset to DEFAULT_SENDER_ADDRESS to be more gas efficient.
    * @param _from The address of the original sender.
    * @param _to The address the message is intended for.
    * @param _fee The fee being paid for the message delivery.
@@ -149,7 +151,7 @@ abstract contract L1MessageService is
       }
     }
 
-    _messageSender = address(123456789);
+    _messageSender = DEFAULT_SENDER_ADDRESS;
 
     emit MessageClaimed(messageHash);
   }
