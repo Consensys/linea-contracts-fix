@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -147,6 +147,10 @@ contract ZkEvmV2 is IZkEvmV2, Initializable, AccessControlUpgradeable, L1Message
     bytes32 _parentStateRootHash,
     bool _shouldProve
   ) private {
+    if (_blocksData.length == 0) {
+      revert EmptyBlockDataArray();
+    }
+
     uint256 currentBlockNumberTemp = currentL2BlockNumber;
 
     uint256 firstBlockNumber;

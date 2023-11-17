@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 interface IZkEvmV2 {
   struct BlockData {
@@ -38,6 +38,11 @@ interface IZkEvmV2 {
    * @dev Thrown when the starting rootHash does not match the existing state
    */
   error StartingRootHashDoesNotMatch();
+
+  /**
+   * @dev Thrown when blockData is empty
+   */
+  error EmptyBlockDataArray();
 
   /**
    * @dev Thrown when block contains zero transactions
