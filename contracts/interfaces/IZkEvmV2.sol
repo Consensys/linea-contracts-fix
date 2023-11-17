@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 interface IZkEvmV2 {
   /*
@@ -48,6 +48,11 @@ interface IZkEvmV2 {
   error StartingRootHashDoesNotMatch();
 
   /**
+   * @dev Thrown when blockData is empty
+   */
+  error EmptyBlockDataArray();
+
+  /**
    * @dev Thrown when block contains zero transactions
    */
   error EmptyBlock();
@@ -72,14 +77,14 @@ interface IZkEvmV2 {
    * @dev DEFAULT_ADMIN_ROLE is required to execute
    * @param _newVerifierAddress The address for the verifier contract
    * @param _proofType The proof type being set/updated
-   **/
+   */
   function setVerifierAddress(address _newVerifierAddress, uint256 _proofType) external;
 
   /**
    * @notice Finalizes blocks without using a proof
    * @dev DEFAULT_ADMIN_ROLE is required to execute
    * @param _calldata The full BlockData collection - block, transaction and log data
-   **/
+   */
   function finalizeBlocksWithoutProof(BlockData[] calldata _calldata) external;
 
   /**
@@ -90,7 +95,7 @@ interface IZkEvmV2 {
    * @param _proof The proof to verified with the proof type verifier contract
    * @param _proofType The proof type to determine which verifier contract to use
    * @param _parentStateRootHash The beginning roothash to start with
-   **/
+   */
   function finalizeBlocks(
     BlockData[] calldata _calldata,
     bytes calldata _proof,

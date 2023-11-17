@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 import { ZkEvmV2 } from "./ZkEvmV2.sol";
 
@@ -9,11 +9,11 @@ import { ZkEvmV2 } from "./ZkEvmV2.sol";
  * @dev Init indicates it is an initializer contract
  */
 contract ZkEvmV2Init is ZkEvmV2 {
-  /*
+  /**
    * @notice Reinitializes zkEvm and underlying service dependencies.
    * @param _initialStateRootHash The initial hash at migration used for proof verification.
    * @param _initialL2BlockNumber The initial block number at migration.
-   **/
+   */
   function initializeV2(uint256 _initialL2BlockNumber, bytes32 _initialStateRootHash) public reinitializer(3) {
     currentL2BlockNumber = _initialL2BlockNumber;
     stateRootHashes[_initialL2BlockNumber] = _initialStateRootHash;
