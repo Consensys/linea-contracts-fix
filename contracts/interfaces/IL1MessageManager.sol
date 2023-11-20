@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 interface IL1MessageManager {
   /**
@@ -18,9 +18,9 @@ interface IL1MessageManager {
   error MessageAlreadySent();
 
   /**
-   * @dev Thrown when the message has already been claimed.
+   * @dev Thrown when the message has already been claimed or does not exist.
    */
-  error MessageDoesNotExistOrHasAlreadyBeenClaimed();
+  error MessageDoesNotExistOrHasAlreadyBeenClaimed(bytes32 messageHash);
 
   /**
    * @dev Thrown when the message has already been received.
