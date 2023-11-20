@@ -58,7 +58,6 @@ contract PlonkVerifier {
   uint256 private constant vk_s3_com_y = 2552117266413842861429350027587256255877998397978448202487083660679276635888;
   
   uint256 private constant vk_coset_shift = 5;
-  
 
   uint256 private constant vk_qc_0_x = 3884624064879507288554125065509059886567955998027552754695080199794317463496;
   uint256 private constant vk_qc_0_y = 3095893745686259387023328325251031582843387681306303361911851672293653329255;
@@ -574,15 +573,13 @@ contract PlonkVerifier {
         p := add(p, mul(vk_nb_custom_gates, 0x20)) // p points now to the wire commitments
 
         let h_fr, ith_lagrange
-       
+
         
         h_fr := hash_fr(calldataload(p), calldataload(add(p, 0x20)), mPtr)
         ith_lagrange := compute_ith_lagrange_at_z(z, zpnmo, add(nb_public_inputs, vk_index_commit_api_0), mPtr)
         pi_commit := addmod(pi_commit, mulmod(h_fr, ith_lagrange, r_mod), r_mod)
-        p := add(p, 0x40)
-        
-
       }
+
 
       // z zeta
       // zpmno ζⁿ-1
@@ -868,6 +865,7 @@ contract PlonkVerifier {
         fr_acc_mul_calldata(add(state, state_folded_claimed_values), add(aproof, proof_s1_at_zeta), acc_gamma)
 
         acc_gamma := mulmod(acc_gamma, l_gamma_kzg, r_mod)
+
         mstore(mPtr, vk_s2_com_x)
         mstore(mPtr20, vk_s2_com_y)
         point_acc_mul(state_folded_digests, mPtr, acc_gamma, mPtr40)
@@ -1002,6 +1000,7 @@ contract PlonkVerifier {
           aproof,
           add(proof_openings_qci_at_zeta, mul(vk_nb_custom_gates, 0x20))
         )
+
         for {
           let i := 0
         } lt(i, vk_nb_custom_gates) {
