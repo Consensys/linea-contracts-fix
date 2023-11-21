@@ -80,12 +80,12 @@ contract PlonkVerifier {
   uint256 private constant proof_o_com_y = 0xa0;
 
   // h = h_0 + x^{n+2}h_1 + x^{2(n+2)}h_2
-  uint256 private constant proof_h_0_x = 0xc0;
-  uint256 private constant proof_h_0_y = 0xe0;
-  uint256 private constant proof_h_1_x = 0x100;
-  uint256 private constant proof_h_1_y = 0x120;
-  uint256 private constant proof_h_2_x = 0x140;
-  uint256 private constant proof_h_2_y = 0x160;
+  uint256 private constant proof_h_0_com_x = 0xc0;
+  uint256 private constant proof_h_0_com_y = 0xe0;
+  uint256 private constant proof_h_1_com_x = 0x100;
+  uint256 private constant proof_h_1_com_y = 0x120;
+  uint256 private constant proof_h_2_com_x = 0x140;
+  uint256 private constant proof_h_2_com_y = 0x160;
 
   // evaluations of wire polynomials at zeta
   uint256 private constant proof_l_at_zeta = 0x180;
@@ -534,26 +534,26 @@ contract PlonkVerifier {
       // mPtr <- [L_0(z), .., L_{n-1}(z)]
       // 
       // Here L_i(zeta) =  ωⁱ/n * (ζⁿ-1)/(ζ-ωⁱ) where:
-      // * n = vk_domain_size
+      // * nb_inputs = nb_public_inputs
       // * ω = vk_omega (generator of the multiplicative cyclic group of order n in (ℤ/rℤ)*)
       // * ζ = z (challenge derived with Fiat Shamir)
       // * zpnmo = 'zeta power n minus one' (ζⁿ-1) which has been precomputed
-      function batch_compute_lagranges_at_z(z, zpnmo, n, mPtr) {
+      function batch_compute_lagranges_at_z(z, zpnmo, nb_inputs, mPtr) {
 
         let zn := mulmod(zpnmo, vk_inv_domain_size, r_mod) // 1/n * (ζⁿ - 1)
         
         let _w := 1
         let _mPtr := mPtr
-        for {let i:=0} lt(i,n) {i:=add(i,1)}
+        for {let i:=0} lt(i,nb_inputs) {i:=add(i,1)}
         {
           mstore(_mPtr, addmod(z,sub(r_mod, _w), r_mod))
           _w := mulmod(_w, vk_omega, r_mod)
           _mPtr := add(_mPtr, 0x20)
         }
-        batch_invert(mPtr, n, _mPtr)
+        batch_invert(mPtr, nb_inputs, _mPtr)
         _mPtr := mPtr
         _w := 1
-        for {let i:=0} lt(i,n) {i:=add(i,1)}
+        for {let i:=0} lt(i,nb_inputs) {i:=add(i,1)}
         {
           mstore(_mPtr, mulmod(mulmod(mload(_mPtr), zn , r_mod), _w, r_mod))
           _mPtr := add(_mPtr, 0x20)
@@ -948,8 +948,7 @@ contract PlonkVerifier {
         mstore(add(mPtr, add(offset, 0x80)), calldataload(add(aproof, proof_o_at_zeta)))
         mstore(add(mPtr, add(offset, 0xa0)), calldataload(add(aproof, proof_s1_at_zeta)))
         mstore(add(mPtr, add(offset, 0xc0)), calldataload(add(aproof, proof_s2_at_zeta)))
-
-        
+    
         let _mPtr := add(mPtr, add(offset, 0xe0))
         let _poscaz := add(aproof, proof_openings_qci_at_zeta)
         for {let i:=0} lt(i, vk_nb_custom_gates) {i:=add(i,1)}
@@ -1105,10 +1104,10 @@ contract PlonkVerifier {
         let n_plus_two := add(vk_domain_size, 2)
         let mPtr := add(mload(0x40), state_last_mem)
         let zeta_power_n_plus_two := pow(mload(add(state, state_zeta)), n_plus_two, mPtr)
-        point_mul_calldata(add(state, state_folded_h_x), add(aproof, proof_h_2_x), zeta_power_n_plus_two, mPtr)
-        point_add_calldata(add(state, state_folded_h_x), add(state, state_folded_h_x), add(aproof, proof_h_1_x), mPtr)
+        point_mul_calldata(add(state, state_folded_h_x), add(aproof, proof_h_2_com_x), zeta_power_n_plus_two, mPtr)
+        point_add_calldata(add(state, state_folded_h_x), add(state, state_folded_h_x), add(aproof, proof_h_1_com_x), mPtr)
         point_mul(add(state, state_folded_h_x), add(state, state_folded_h_x), zeta_power_n_plus_two, mPtr)
-        point_add_calldata(add(state, state_folded_h_x), add(state, state_folded_h_x), add(aproof, proof_h_0_x), mPtr)
+        point_add_calldata(add(state, state_folded_h_x), add(state, state_folded_h_x), add(aproof, proof_h_0_com_x), mPtr)
       }
 
       // check that
