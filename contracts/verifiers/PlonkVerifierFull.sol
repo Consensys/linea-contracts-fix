@@ -32,7 +32,6 @@ contract PlonkVerifier {
   uint256 private constant g2_srs_1_x_1 = 19089565590083334368588890253123139704298730990782503769911324779715431555531;
   uint256 private constant g2_srs_1_y_0 = 9779648407879205346559610309258181044130619080926897934572699915909528404984;
   uint256 private constant g2_srs_1_y_1 = 6779728121489434657638426458390319301070371227460768374343986326751507916979;
-  
 
   uint256 private constant G1_SRS_X = 14312776538779914388377568895031746459131577658076416373430523308756343304251;
   uint256 private constant G1_SRS_Y = 11763105256161367503191792604679297387056316997144156930871823008787082098465;
@@ -959,6 +958,7 @@ contract PlonkVerifier {
           _poscaz := add(_poscaz, 0x20)
           _mPtr := add(_mPtr, 0x20)
         }
+        
 
         mstore(_mPtr, calldataload(add(aproof, proof_grand_product_at_zeta_omega)))
 
@@ -1099,7 +1099,11 @@ contract PlonkVerifier {
         compute_commitment_linearised_polynomial_ec(aproof, s1, s2)
       }
 
-      // compute H₁ + ζⁿ⁺²*H₂ + ζ²⁽ⁿ⁺²⁾*H₃ and store the result at
+      /// @notice this part deviates from the paper. Here the H_{i} are
+      /// commitment to polynomials of degree n+1, while in the paper they are
+      /// commitment to polynomials of degree n-1, n-1, n+2. It doesn't change
+      /// the protocol overall, and allows to use an SRS with one point less.
+      // compute H₁ + ζᵐ⁺²*H₂ + ζ²⁽ᵐ⁺²⁾*H₃ and store the result at
       // state + state_folded_h
       function fold_h(aproof) {
         let state := mload(0x40)

@@ -957,6 +957,7 @@ contract PlonkVerifier {
           _poscaz := add(_poscaz, 0x20)
           _mPtr := add(_mPtr, 0x20)
         }
+        
 
         mstore(_mPtr, calldataload(add(aproof, proof_grand_product_at_zeta_omega)))
 
@@ -1097,7 +1098,11 @@ contract PlonkVerifier {
         compute_commitment_linearised_polynomial_ec(aproof, s1, s2)
       }
 
-      // compute H₁ + ζⁿ⁺²*H₂ + ζ²⁽ⁿ⁺²⁾*H₃ and store the result at
+      /// @notice this part deviates from the paper. Here the H_{i} are
+      /// commitment to polynomials of degree n+1, while in the paper they are
+      /// commitment to polynomials of degree n-1, n-1, n+2. It doesn't change
+      /// the protocol overall, and allows to use an SRS with one point less.
+      // compute H₁ + ζᵐ⁺²*H₂ + ζ²⁽ᵐ⁺²⁾*H₃ and store the result at
       // state + state_folded_h
       function fold_h(aproof) {
         let state := mload(0x40)
