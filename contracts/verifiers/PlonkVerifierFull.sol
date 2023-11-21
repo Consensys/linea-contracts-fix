@@ -582,15 +582,13 @@ contract PlonkVerifier {
         let p := add(aproof, PROOF_COMMITMENTS_WIRES_CUSTOM_GATES)
 
         let h_fr, ith_lagrange
-       
+
         
         h_fr := hash_fr(calldataload(p), calldataload(add(p, 0x20)), mPtr)
         ith_lagrange := compute_ith_lagrange_at_z(z, zpnmo, add(nb_public_inputs, vk_index_commit_api_0), mPtr)
         pi_commit := addmod(pi_commit, mulmod(h_fr, ith_lagrange, r_mod), r_mod)
-        p := add(p, 0x40)
-        
-
       }
+
 
       // z zeta
       // zpmno ζⁿ-1
@@ -854,7 +852,6 @@ contract PlonkVerifier {
         mstore(add(state, state_folded_digests_y), mload(add(state, state_folded_h_y)))
         mstore(add(state, state_folded_claimed_values), calldataload(add(aproof, proof_quotient_polynomial_at_zeta)))
 
-
         point_acc_mul(add(state, state_folded_digests_x), add(mPtr, 0x80), acc_gamma, mPtrOffset)
         fr_acc_mul_calldata(add(state, state_folded_claimed_values), add(aproof, proof_linearised_polynomial_at_zeta), acc_gamma)
 
@@ -877,6 +874,7 @@ contract PlonkVerifier {
         fr_acc_mul_calldata(add(state, state_folded_claimed_values), add(aproof, proof_s1_at_zeta), acc_gamma)
 
         acc_gamma := mulmod(acc_gamma, l_gamma_kzg, r_mod)
+
         mstore(mPtr, vk_s2_com_x)
         mstore(mPtr20, vk_s2_com_y)
         point_acc_mul(state_folded_digests, mPtr, acc_gamma, mPtr40)
@@ -952,7 +950,6 @@ contract PlonkVerifier {
 
         let start_input := 0x1b // 00.."gamma"
         let size_input := add(0x17, mul(vk_nb_custom_gates,3)) // number of 32bytes elmts = 0x17 (zeta+2*7+7 for the digests+openings) + 2*vk_nb_custom_gates (for the commitments of the selectors) + vk_nb_custom_gates (for the openings of the selectors)
-
         size_input := add(0x5, mul(size_input, 0x20)) // size in bytes: 15*32 bytes + 5 bytes for gamma
         let check_staticcall := staticcall(gas(), 0x2, add(mPtr,start_input), size_input, add(state, state_gamma_kzg), 0x20)
         if eq(check_staticcall, 0) {
