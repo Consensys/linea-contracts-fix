@@ -60,7 +60,7 @@ contract PlonkVerifier {
   uint256 private constant vk_s3_com_x = 2388947932233667508399049238129714227910354367274846135703769655714826661419;
   uint256 private constant vk_s3_com_y = 2552117266413842861429350027587256255877998397978448202487083660679276635888;
   
-  uint256 private constant vk_coset_shift = 5; 
+  uint256 private constant vk_coset_shift = 5;
 
   uint256 private constant vk_qc_0_x = 3884624064879507288554125065509059886567955998027552754695080199794317463496;
   uint256 private constant vk_qc_0_y = 3095893745686259387023328325251031582843387681306303361911851672293653329255;
@@ -175,6 +175,7 @@ contract PlonkVerifier {
       let freeMem := add(mem, state_last_mem)
 
       // sanity checks
+      check_number_of_public_inputs(public_inputs.length)
       check_inputs_size(public_inputs.length, public_inputs.offset)
       check_proof_size(proof.length)
       check_proof_openings_size(proof.offset)
@@ -208,6 +209,16 @@ contract PlonkVerifier {
       success := mload(add(mem, state_success))
 
       // Beginning errors -------------------------------------------------
+
+      function error_nb_public_inputs() {
+        let ptError := mload(0x40)
+        mstore(ptError, error_string_id) // selector for function Error(string)
+        mstore(add(ptError, 0x4), 0x20)
+        mstore(add(ptError, 0x24), 0x1d)
+        mstore(add(ptError, 0x44), "wrong number of public inputs")
+        revert(ptError, 0x64)
+      }
+
       function error_ec_op() {
         let ptError := mload(0x40)
         mstore(ptError, error_string_id) // selector for function Error(string)
@@ -265,6 +276,14 @@ contract PlonkVerifier {
 
       // Beginning checks -------------------------------------------------
     
+      /// @param s actual number of public inputs
+      function check_number_of_public_inputs(s) {
+        let a := sub(1, eq(s, vk_nb_public_inputs))
+        if a {
+          error_nb_public_inputs()
+        }
+      }
+
       // s number of public inputs, p pointer the public inputs
       function check_inputs_size(s, p) {
         for {let i} lt(i, s) {i:=add(i,1)}
@@ -293,6 +312,7 @@ contract PlonkVerifier {
 
         // quotient polynomial at zeta
         p := add(aproof, proof_quotient_polynomial_at_zeta)
+
         if iszero(lt(calldataload(p), r_mod)) {
           error_proof_openings_size()
         }

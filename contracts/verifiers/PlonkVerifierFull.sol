@@ -177,6 +177,7 @@ contract PlonkVerifier {
       let freeMem := add(mem, state_last_mem)
 
       // sanity checks
+      check_number_of_public_inputs(public_inputs.length)
       check_inputs_size(public_inputs.length, public_inputs.offset)
       check_proof_size(proof.length)
       check_proof_openings_size(proof.offset)
@@ -210,6 +211,16 @@ contract PlonkVerifier {
       success := mload(add(mem, state_success))
 
       // Beginning errors -------------------------------------------------
+
+      function error_nb_public_inputs() {
+        let ptError := mload(0x40)
+        mstore(ptError, error_string_id) // selector for function Error(string)
+        mstore(add(ptError, 0x4), 0x20)
+        mstore(add(ptError, 0x24), 0x1d)
+        mstore(add(ptError, 0x44), "wrong number of public inputs")
+        revert(ptError, 0x64)
+      }
+
       function error_ec_op() {
         let ptError := mload(0x40)
         mstore(ptError, error_string_id) // selector for function Error(string)
@@ -267,6 +278,14 @@ contract PlonkVerifier {
 
       // Beginning checks -------------------------------------------------
     
+      /// @param s actual number of public inputs
+      function check_number_of_public_inputs(s) {
+        let a := sub(1, eq(s, vk_nb_public_inputs))
+        if a {
+          error_nb_public_inputs()
+        }
+      }
+
       // s number of public inputs, p pointer the public inputs
       function check_inputs_size(s, p) {
         for {let i} lt(i, s) {i:=add(i,1)}
@@ -295,6 +314,7 @@ contract PlonkVerifier {
 
         // quotient polynomial at zeta
         p := add(aproof, proof_quotient_polynomial_at_zeta)
+
         if iszero(lt(calldataload(p), r_mod)) {
           error_proof_openings_size()
         }
@@ -874,7 +894,7 @@ contract PlonkVerifier {
         fr_acc_mul_calldata(add(state, state_folded_claimed_values), add(aproof, proof_s1_at_zeta), acc_gamma)
 
         acc_gamma := mulmod(acc_gamma, l_gamma_kzg, r_mod)
-
+        
         mstore(mPtr, vk_s2_com_x)
         mstore(mPtr20, vk_s2_com_y)
         point_acc_mul(state_folded_digests, mPtr, acc_gamma, mPtr40)
