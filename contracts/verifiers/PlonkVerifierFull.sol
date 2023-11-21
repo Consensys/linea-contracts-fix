@@ -33,6 +33,10 @@ contract PlonkVerifier {
   uint256 private constant g2_srs_1_y_0 = 9779648407879205346559610309258181044130619080926897934572699915909528404984;
   uint256 private constant g2_srs_1_y_1 = 6779728121489434657638426458390319301070371227460768374343986326751507916979;
   
+
+  uint256 private constant G1_SRS_X = 14312776538779914388377568895031746459131577658076416373430523308756343304251;
+  uint256 private constant G1_SRS_Y = 11763105256161367503191792604679297387056316997144156930871823008787082098465;
+
   // ----------------------- vk ---------------------
   uint256 private constant vk_domain_size = 33554432;
   uint256 private constant vk_inv_domain_size = 21888242219518804655518433051623070663413851959604507555939307129453691614729;
@@ -109,9 +113,8 @@ contract PlonkVerifier {
   uint256 private constant proof_opening_at_zeta_omega_x = 0x300;
   uint256 private constant proof_opening_at_zeta_omega_y = 0x320;
 
-  uint256 private constant proof_openings_qci_at_zeta = 0x340;
-  // -> next part of proof is
-  // [ openings_selector_commits || commitments_wires_commit_api]
+  uint256 private constant proof_openings_selector_commit_api_at_zeta = 0x340;
+  uint256 private constant PROOF_COMMITMENTS_WIRES_CUSTOM_GATES = 0x360;
 
   // -------- offset state
 
@@ -394,6 +397,12 @@ contract PlonkVerifier {
         calldatacopy(_mPtr, pi, size_pi_in_bytes)
         _mPtr := add(_mPtr, size_pi_in_bytes)
 
+        // wire commitment commit api
+        let _proof := add(aproof, PROOF_COMMITMENTS_WIRES_CUSTOM_GATES)
+        let size_wire_commitments_commit_api_in_bytes := mul(vk_nb_commitments_commit_api, 0x40)
+        calldatacopy(_mPtr, _proof, size_wire_commitments_commit_api_in_bytes)
+        _mPtr := add(_mPtr, size_wire_commitments_commit_api_in_bytes)
+
         // commitments to l, r, o
         let size_commitments_lro_in_bytes := 0xc0
         calldatacopy(_mPtr, aproof, size_commitments_lro_in_bytes)
@@ -570,8 +579,7 @@ contract PlonkVerifier {
         let z := mload(add(state, state_zeta))
         let zpnmo := mload(add(state, state_zeta_power_n_minus_one))
 
-        let p := add(aproof, proof_openings_qci_at_zeta)
-        p := add(p, mul(vk_nb_custom_gates, 0x20)) // p points now to the wire commitments
+        let p := add(aproof, PROOF_COMMITMENTS_WIRES_CUSTOM_GATES)
 
         let h_fr, ith_lagrange
 
@@ -765,8 +773,9 @@ contract PlonkVerifier {
 
         let folded_evals_commit := mPtr
         mPtr := add(folded_evals_commit, 0x40)
-        mstore(folded_evals_commit, 14312776538779914388377568895031746459131577658076416373430523308756343304251)
-        mstore(add(folded_evals_commit, 0x20), 11763105256161367503191792604679297387056316997144156930871823008787082098465)
+        mstore(folded_evals_commit, G1_SRS_X)
+        mstore(add(folded_evals_commit, 0x20), G1_SRS_Y)
+
         mstore(add(folded_evals_commit, 0x40), mload(folded_evals))
         let check_staticcall := staticcall(gas(), 7, folded_evals_commit, 0x60, folded_evals_commit, 0x40)
         if eq(check_staticcall, 0) {
@@ -936,6 +945,7 @@ contract PlonkVerifier {
           _mPtr := add(_mPtr, 0x20)
         }
         
+
         mstore(_mPtr, calldataload(add(aproof, proof_grand_product_at_zeta_omega)))
 
         let start_input := 0x1b // 00.."gamma"
@@ -993,11 +1003,8 @@ contract PlonkVerifier {
           add(mPtr, 0x40)
         )
 
-        let commits_api_at_zeta := add(aproof, proof_openings_qci_at_zeta)
-        let commits_api := add(
-          aproof,
-          add(proof_openings_qci_at_zeta, mul(vk_nb_custom_gates, 0x20))
-        )
+        let commits_api_at_zeta := add(aproof, proof_openings_selector_commit_api_at_zeta)
+        let commits_api := add(aproof, PROOF_COMMITMENTS_WIRES_CUSTOM_GATES)
 
         for {
           let i := 0
