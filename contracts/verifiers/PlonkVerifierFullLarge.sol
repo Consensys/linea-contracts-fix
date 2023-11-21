@@ -166,7 +166,7 @@ contract PlonkVerifier {
 	uint8 private constant one = 1;
 	uint8 private constant two = 2;
   
-/// Verify a Plonk proof.
+  /// Verify a Plonk proof.
   /// Reverts if the proof or the public inputs are malformed.
   /// @param proof serialised plonk proof (using gnark's MarshalSolidity)
   /// @param public_inputs (must be reduced)
@@ -288,7 +288,7 @@ contract PlonkVerifier {
       // end errors -------------------------------------------------
 
       // Beginning checks -------------------------------------------------
-    
+
       /// Checks that the public inputs are < R_MOD.
       /// @param s number of public inputs
       /// @param p pointer to the public inputs array
@@ -310,7 +310,7 @@ contract PlonkVerifier {
          error_proof_size() 
         }
       }
-    
+
       /// Checks if the multiple openings of the polynomials are < R_MOD.
       /// @param aproof pointer to the beginning of the proof
       /// @dev the 'a' prepending proof is to have a local name
@@ -636,11 +636,14 @@ contract PlonkVerifier {
 
         let p := add(aproof, PROOF_COMMITMENTS_WIRES_CUSTOM_GATES)
 
-        let h_fr, ith_lagrange
-
+        let h_fr, ith_lagrange  
+        
         h_fr := hash_fr(calldataload(p), calldataload(add(p, 0x20)), mPtr)
         ith_lagrange := compute_ith_lagrange_at_z(z, zpnmo, add(nb_public_inputs, vk_index_commit_api_0), mPtr)
         pi_commit := addmod(pi_commit, mulmod(h_fr, ith_lagrange, r_mod), r_mod)
+
+      }
+
 
       }
 
@@ -986,7 +989,7 @@ contract PlonkVerifier {
         mstore(add(mPtr,offset), vk_qc_0_x)
         mstore(add(mPtr,add(offset, 0x20)), vk_qc_0_y)
         offset := add(offset, 0x40)
-        
+     
         mstore(add(mPtr, offset), calldataload(add(aproof, proof_quotient_polynomial_at_zeta)))
         mstore(add(mPtr, add(offset, 0x20)), calldataload(add(aproof, proof_linearised_polynomial_at_zeta)))
         mstore(add(mPtr, add(offset, 0x40)), calldataload(add(aproof, proof_l_at_zeta)))
@@ -994,7 +997,7 @@ contract PlonkVerifier {
         mstore(add(mPtr, add(offset, 0x80)), calldataload(add(aproof, proof_o_at_zeta)))
         mstore(add(mPtr, add(offset, 0xa0)), calldataload(add(aproof, proof_s1_at_zeta)))
         mstore(add(mPtr, add(offset, 0xc0)), calldataload(add(aproof, proof_s2_at_zeta)))
-    
+        
         let _mPtr := add(mPtr, add(offset, 0xe0))
         let _poscaz := add(aproof, proof_openings_qci_at_zeta)
         for {let i:=0} lt(i, vk_nb_custom_gates) {i:=add(i,1)}
@@ -1003,7 +1006,6 @@ contract PlonkVerifier {
           _poscaz := add(_poscaz, 0x20)
           _mPtr := add(_mPtr, 0x20)
         }
-        
 
         mstore(_mPtr, calldataload(add(aproof, proof_grand_product_at_zeta_omega)))
 
