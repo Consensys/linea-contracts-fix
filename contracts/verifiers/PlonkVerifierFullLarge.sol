@@ -303,7 +303,6 @@ contract PlonkVerifier {
       }
     
       function check_proof_openings_size(aproof) {
-      
         // linearised polynomial at zeta
         let p := add(aproof, proof_linearised_polynomial_at_zeta)
         if iszero(lt(calldataload(p), r_mod)){
@@ -312,7 +311,6 @@ contract PlonkVerifier {
 
         // quotient polynomial at zeta
         p := add(aproof, proof_quotient_polynomial_at_zeta)
-
         if iszero(lt(calldataload(p), r_mod)) {
           error_proof_openings_size()
         }
@@ -511,7 +509,7 @@ contract PlonkVerifier {
 
       // BEGINNING compute_pi -------------------------------------------------
 
-      // public input (not comming from the commit api) contribution
+      // public input (not coming from the commit api) contribution
       // ins, n are the public inputs and number of public inputs respectively
       function sum_pi_wo_api_commit(ins, n, mPtr)->pi_wo_commit {
         
@@ -600,7 +598,6 @@ contract PlonkVerifier {
         let p := add(aproof, PROOF_COMMITMENTS_WIRES_CUSTOM_GATES)
 
         let h_fr, ith_lagrange
-
         
         h_fr := hash_fr(calldataload(p), calldataload(add(p, 0x20)), mPtr)
         ith_lagrange := compute_ith_lagrange_at_z(z, zpnmo, add(nb_public_inputs, vk_index_commit_api_0), mPtr)
@@ -716,8 +713,7 @@ contract PlonkVerifier {
           error_verify()
         }
 
-        // at this point we have mPtr = [ b1 || b2] where b1 and b2 are on 32 btyes, and we
-        // want to take the 16 leftmost bytes of b2.
+        // at this point we have mPtr = [ b1 || b2] where b1 is on 32 bytes and b2 is 16 bytes.
         // we interpret it as a big integer mod r in big endian (similar to regular decimal notation)
         // the result is then 2**(8*16)*mPtr[:32] + mPtr[32:48]
         res := mulmod(mload(mPtr), bb, r_mod) // <- res = 2**128 * mPtr[:32]
@@ -837,7 +833,7 @@ contract PlonkVerifier {
       }
 
       // check_pairing_kzg checks the result of the final pairing product of the batched
-      // kzg verification. The purpose of this function is too avoid exhausting the stack
+      // kzg verification. The purpose of this function is to avoid exhausting the stack
       // in the function batch_verify_multi_points.
       // mPtr: pointer storing the tuple of pairs
       function check_pairing_kzg(mPtr) {
@@ -892,7 +888,7 @@ contract PlonkVerifier {
         fr_acc_mul_calldata(add(state, state_folded_claimed_values), add(aproof, proof_s1_at_zeta), acc_gamma)
 
         acc_gamma := mulmod(acc_gamma, l_gamma_kzg, r_mod)
-
+        
         mstore(mPtr, vk_s2_com_x)
         mstore(mPtr20, vk_s2_com_y)
         point_acc_mul(state_folded_digests, mPtr, acc_gamma, mPtr40)
@@ -962,7 +958,6 @@ contract PlonkVerifier {
           _poscaz := add(_poscaz, 0x20)
           _mPtr := add(_mPtr, 0x20)
         }
-        
 
         mstore(_mPtr, calldataload(add(aproof, proof_grand_product_at_zeta_omega)))
 
