@@ -32,7 +32,7 @@ contract PlonkVerifier {
   uint256 private constant g2_srs_1_x_1 = 19089565590083334368588890253123139704298730990782503769911324779715431555531;
   uint256 private constant g2_srs_1_y_0 = 9779648407879205346559610309258181044130619080926897934572699915909528404984;
   uint256 private constant g2_srs_1_y_1 = 6779728121489434657638426458390319301070371227460768374343986326751507916979;
-  
+
   uint256 private constant G1_SRS_X = 14312776538779914388377568895031746459131577658076416373430523308756343304251;
   uint256 private constant G1_SRS_Y = 11763105256161367503191792604679297387056316997144156930871823008787082098465;
 
@@ -353,7 +353,7 @@ contract PlonkVerifier {
 
         // proof_openings_selector_commit_api_at_zeta
         p := add(aproof, proof_openings_selector_commit_api_at_zeta)
-        for {let i:=0} lt(i, vk_nb_commitments_commit_api) {i:=add(i,1)}
+        for {let i:=0} lt(i, vk_nb_custom_gates) {i:=add(i,1)}
         {
           if iszero(lt(calldataload(p), r_mod)) {
             error_proof_openings_size()
@@ -792,7 +792,7 @@ contract PlonkVerifier {
 
         mstore(add(folded_evals_commit, 0x40), mload(folded_evals))
         let check_staticcall := staticcall(gas(), 7, folded_evals_commit, 0x60, folded_evals_commit, 0x40)
-        if eq(check_staticcall, 0) {
+        if iszero(check_staticcall) {
           error_verify()
         }
 
@@ -887,8 +887,7 @@ contract PlonkVerifier {
         point_acc_mul(state_folded_digests, mPtr, acc_gamma, mPtr40)
         fr_acc_mul_calldata(add(state, state_folded_claimed_values), add(aproof, proof_s1_at_zeta), acc_gamma)
 
-        acc_gamma := mulmod(acc_gamma, l_gamma_kzg, r_mod)
-        
+        acc_gamma := mulmod(acc_gamma, l_gamma_kzg, r_mod)        
         mstore(mPtr, vk_s2_com_x)
         mstore(mPtr20, vk_s2_com_y)
         point_acc_mul(state_folded_digests, mPtr, acc_gamma, mPtr40)
@@ -936,7 +935,7 @@ contract PlonkVerifier {
         mstore(add(mPtr,0x1e0), vk_s2_com_y)
         
         let offset := 0x200
-        
+
         mstore(add(mPtr,offset), vk_qc_0_x)
         mstore(add(mPtr,add(offset, 0x20)), vk_qc_0_y)
         offset := add(offset, 0x40)
@@ -957,7 +956,6 @@ contract PlonkVerifier {
           _poscaz := add(_poscaz, 0x20)
           _mPtr := add(_mPtr, 0x20)
         }
-        
 
         mstore(_mPtr, calldataload(add(aproof, proof_grand_product_at_zeta_omega)))
 
@@ -1250,7 +1248,7 @@ contract PlonkVerifier {
         mstore(add(mPtr, 0x80), e)
         mstore(add(mPtr, 0xa0), r_mod)
         let check_staticcall := staticcall(gas(),0x05,mPtr,0xc0,mPtr,0x20)
-        if eq(check_staticcall, 0) {
+        if iszero(check_staticcall) {
           error_verify()
         }
         res := mload(mPtr)
