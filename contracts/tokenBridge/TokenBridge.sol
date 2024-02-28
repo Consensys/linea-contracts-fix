@@ -299,7 +299,7 @@ contract TokenBridge is
    *   the `claimMessage` function of the Message Service to trigger the transaction.
    * @param _nativeTokens Array of native tokens for which the DEPLOYED status must be set.
    */
-  function setDeployed(address[] memory _nativeTokens) external onlyMessagingService onlyAuthorizedRemoteSender {
+  function setDeployed(address[] calldata _nativeTokens) external onlyMessagingService onlyAuthorizedRemoteSender {
     address nativeToken;
     unchecked {
       for (uint256 i; i < _nativeTokens.length; ) {
