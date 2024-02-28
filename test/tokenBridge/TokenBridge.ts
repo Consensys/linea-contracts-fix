@@ -1,6 +1,6 @@
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
-import { BigNumber } from "ethers";
+import { BigNumber, Contract } from "ethers";
 import { ethers, upgrades } from "hardhat";
 import { deployTokenBridgeWithMockMessaging } from "../../scripts/tokenBridge/test/deployTokenBridges";
 import { deployTokens } from "../../scripts/tokenBridge/test/deployTokens";
@@ -278,6 +278,49 @@ describe("TokenBridge", function () {
         await l1TokenBridge.connect(owner).pause();
         await l1TokenBridge.connect(owner).unpause();
         await l1TokenBridge.connect(user).bridgeToken(L1DAI.address, 10, user.address, []);
+      });
+      
+      it("Should emit BridgingInitiated when bridging", async function () {
+        const {
+          user,
+          l1TokenBridge,
+          tokens: { L1DAI },
+        } = await loadFixture(deployContractsFixture);
+
+        await expect(l1TokenBridge.connect(user).bridgeToken(L1DAI.address, 10, user.address, []))
+          .to.emit(l1TokenBridge, "BridgingInitiated")
+          .withArgs(user.address, user.address, L1DAI.address, 10);
+      });
+
+      it("Should emit BridgingFinalized event when bridging is complete", async function () {
+        const {
+          user,
+          l1TokenBridge,
+          l2TokenBridge,
+          tokens: { L1DAI },
+          chainIds,
+        } = await loadFixture(deployContractsFixture);
+        const bridgeAmount = 10;
+
+        // const initialAmount = await L1DAI.balanceOf(user.address);
+        await l1TokenBridge.connect(user).bridgeToken(L1DAI.address, bridgeAmount, user.address);
+        const L2DAIBridgedAddress = await l2TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address);
+        await l2TokenBridge.confirmDeployment([L2DAIBridgedAddress]);
+
+        const bridgedToken = await l2TokenBridge.nativeToBridgedToken(chainIds[0], L1DAI.address);
+
+        const abi = [
+          "event BridgingFinalized(address indexed nativeToken,address indexed bridgedToken,uint256 amount,address indexed recipient)",
+        ];
+
+        const contract = new Contract(l2TokenBridge.address, abi, ethers.provider);
+        // Filtering for indexed fields by default validates they are correct when events are not null
+        const filteredEvents = contract.filters.BridgingFinalized(L1DAI.address, bridgedToken, null, user.address);
+
+        const events = await l2TokenBridge.queryFilter(filteredEvents);
+        expect(events).to.not.be.null;
+        expect(events).to.not.be.empty;
+        expect(events[0].args?.[2]).to.equal(10);
       });
     });
 
